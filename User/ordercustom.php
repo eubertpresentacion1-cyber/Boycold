@@ -451,12 +451,63 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         }
 
         /* ── Add to Cart button ── */
-        document.querySelector('.btn.cart-btn').addEventListener('click', function () {
+        document.querySelector('.btn.cart-btn').addEventListener('click', async function () {
             const item = buildCartItem();
-            const cart = getCart();
-            cart.push(item);
-            saveCart(cart);
-            window.location.href = 'addtocart.php';
+            
+            try {
+                // Send to database API instead of localStorage
+                const res = await fetch('../api/cart_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add',
+                        product_name: item.name,
+                        quantity: item.qty,
+                        milk: item.milk,
+                        addons: item.addons,
+                        order_type: item.orderType,
+                        notes: item.notes
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = 'addtocart.php';
+                } else {
+                    alert('Failed to add to cart. Please try again.');
+                }
+            } catch (err) {
+                alert('Network error. Please try again.');
+            }
+        });
+
+        /* ── Proceed to Checkout button ── */
+        document.querySelector('.btn.checkout-btn').addEventListener('click', async function () {
+            const item = buildCartItem();
+            
+            try {
+                // Send to database API
+                const res = await fetch('../api/cart_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add',
+                        product_name: item.name,
+                        quantity: item.qty,
+                        milk: item.milk,
+                        addons: item.addons,
+                        order_type: item.orderType,
+                        notes: item.notes
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = 'addtocart.php';
+                } else {
+                    alert('Failed to add to cart. Please try again.');
+                }
+            } catch (err) {
+                alert('Network error. Please try again.');
+            }
         });
 
         /* ── Option Buttons ── */
