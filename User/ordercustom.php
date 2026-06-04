@@ -31,7 +31,7 @@ $productImage = isset($_GET['image']) ? htmlspecialchars(strip_tags($_GET['image
 $productAddon = isset($_GET['addon']) ? htmlspecialchars(strip_tags($_GET['addon'])) : '';
 
 // Bites items: use addon system, hide milk/espresso options
-$bitesItems  = ['French Fries', 'Chicken Poppers', 'Fries and Chicken Poppers', 'Beef Natchos'];
+$bitesItems  = ['French Fries', 'Chicken Poppers', 'Fries and Chicken Poppers'];
 $isBitesItem = in_array($productName, $bitesItems);
 
 // Sauce/flavor options per item [label => price]

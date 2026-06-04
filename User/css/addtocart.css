@@ -445,6 +445,7 @@ footer {
 
 /* ── Tablet landscape (≤ 1024px) ── */
 @media (max-width: 1024px) {
+
     .order-header,
     .cart-box {
         width: calc(100% - 80px);
@@ -663,6 +664,7 @@ footer {
 
 /* ── Small mobile (≤ 480px) ── */
 @media (max-width: 480px) {
+
     .order-header,
     .cart-box {
         width: calc(100% - 24px);
