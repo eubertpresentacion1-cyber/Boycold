@@ -240,10 +240,24 @@ $_SESSION['user_email'] = $user['email'];
 
         function renderCart(items) {
             const container = document.getElementById('cartItems');
+            const cartBox = document.querySelector('.cart-box');
+            
             if (!items.length) {
-                container.innerHTML = '<div class="empty-cart">Your cart is empty. <a href="menu.php">Browse menu</a></div>';
+                container.innerHTML = `
+                    <div class="empty-cart-state">
+                        <div class="empty-cart-icon-wrap">
+                            <i class="fa-solid fa-shopping-cart empty-cart-icon"></i>
+                        </div>
+                        <h2 class="empty-cart-title">Your Cart is Empty</h2>
+                        <p class="empty-cart-desc">Add items from our menu to get started with your order!</p>
+                        <a href="menu.php" class="empty-cart-cta">Browse Menu</a>
+                    </div>
+                `;
+                if (cartBox) cartBox.classList.add('is-empty');
                 return;
             }
+            
+            if (cartBox) cartBox.classList.remove('is-empty');
             container.innerHTML = items.map(item => `
         <div class="cart-item" data-cart-id="${item.cartId}">
             <div class="cart-item-img"><img src="${item.image}" alt="${item.name}"></div>
@@ -308,8 +322,23 @@ $_SESSION['user_email'] = $user['email'];
 
         function recalcSummary() {
             const sub = currentCart.reduce((s, i) => s + i.total, 0);
+            const checkoutBtn = document.querySelector('.btn-checkout');
+            
             document.getElementById('summarySubtotal').textContent = '₱' + sub.toFixed(2);
             document.getElementById('summaryTotal').textContent = '₱' + (sub + DELIVERY + TAX).toFixed(2);
+            
+            // Enable/disable checkout button based on cart
+            if (checkoutBtn) {
+                if (currentCart.length === 0) {
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.style.opacity = '0.45';
+                    checkoutBtn.style.cursor = 'not-allowed';
+                } else {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.style.opacity = '1';
+                    checkoutBtn.style.cursor = 'pointer';
+                }
+            }
         }
 
         async function placeOrder() {
