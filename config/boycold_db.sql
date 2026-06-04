@@ -248,8 +248,8 @@ INSERT INTO `products` (`product_name`, `description`, `price`, `image`, `catego
 ('Java Chips', 'Java chips blended drink', 99.00, '/picture/Java Chips.png', 'non-coffee', 1),
 
 -- Bites
-('Fries', 'Crispy French fries', 65.00, '/picture/Fries.png', 'bites', 1),
-('Chicken Poppers', 'Crispy chicken poppers', 89.00, '/picture/Chicken Poppers.png', 'bites', 1),
+('French Fries', 'Crispy French fries', 69.00, '/picture/Fries.png', 'bites', 1),
+('Chicken Poppers', 'Crispy chicken poppers', 79.00, '/picture/Chicken Poppers.png', 'bites', 1),
 ('Chicken poppers and fries', 'Poppers with fries combo', 99.00, '/picture/Chicken poppers and fries.png', 'bites', 1),
 ('Beef Natchos', 'Beef loaded nachos', 149.00, '/picture/Beef Natchos.png', 'bites', 1),
 ('Fries and Chicken Poppers', 'Fries with chicken poppers', 99.00, '/picture/Chicken poppers and fries.png', 'bites', 1),

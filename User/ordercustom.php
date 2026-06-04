@@ -61,9 +61,10 @@ $selectedSauce = ($productAddon && isset($sauceOptions[$productAddon])) ? $produ
 
 // Waffles & Quesadilla: hide Milk Choice and Add-ons entirely
 $noAddonItems = [
-    'Lolly Waffle Biscoff', 'Lolly Waffle Tiramisu', 'Lolly Waffle Oreo', 'Lolly Waffle Strawberry',
-    'Lolly Waffle Matcha', 'Lolly Waffle Ube', 'Lolly Waffle Chocolate',
+    'Chocolate waffle', 'Biscoff waffle', 'Oreo waffle', 'Strawberry waffle',
+    'tiramisu waffle', 'ube waffle',
     'Beef Quesadilla', 'Chicken Quesadilla', 'Messy Tuna Spinach',
+    'Beef Natchos',
 ];
 $isNoAddonItem = in_array($productName, $noAddonItems);
 ?>
