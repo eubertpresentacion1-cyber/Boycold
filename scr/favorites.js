@@ -1,6 +1,6 @@
 // ── favorites.js ──────────────────────────────────────────────
 // Renders the favorites page using data from favorites_api.php.
-// No longer relies on localStorage — all data is per-user in DB.
+// All cart and favorites data is stored in the DB, not localStorage.
 // ─────────────────────────────────────────────────────────────
 
 const nav = document.getElementById('mainNav');
@@ -25,20 +25,21 @@ function toggleSearch() {
     if (isOpen) setTimeout(() => search.querySelector('input').focus(), 420);
     else search.querySelector('input').value = '';
 }
-document.addEventListener('click', function(e) {
-    const search = document.getElementById('navSearch');
-    const btn    = document.getElementById('searchIconBtn');
-    if (!search || !btn) return;
-    if (!search.contains(e.target) && !btn.contains(e.target)) {
-        search.classList.remove('open');
-        btn.classList.remove('active');
-        search.querySelector('input').value = '';
-    }
-});
 function toggleAvatarDropdown() {
     document.getElementById('avatarDropdown').classList.toggle('open');
 }
+
+// ── Close dropdowns when clicking outside ────────────────────
 document.addEventListener('click', function(e) {
+    // Search bar
+    const search = document.getElementById('navSearch');
+    const searchBtn = document.getElementById('searchIconBtn');
+    if (search && searchBtn && !search.contains(e.target) && !searchBtn.contains(e.target)) {
+        search.classList.remove('open');
+        searchBtn.classList.remove('active');
+        search.querySelector('input').value = '';
+    }
+    // Avatar dropdown
     const wrap = document.querySelector('.avatar-dropdown-wrap');
     if (wrap && !wrap.contains(e.target)) {
         const dd = document.getElementById('avatarDropdown');
@@ -47,7 +48,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── FAVORITES DATA FROM API ───────────────────────────────────
-let favItems = []; // [{product_id, product_name, price, image, category}]
+let favItems = [];
 
 async function fetchFavorites() {
     try {
@@ -77,16 +78,16 @@ async function removeFav(productName) {
 }
 
 function renderFavs() {
-    const sort    = document.getElementById('favSort')?.value ?? 'default';
-    let   items   = [...favItems];
+    const sort   = document.getElementById('favSort')?.value ?? 'default';
+    let   items  = [...favItems];
 
-    if (sort === 'price-asc')  items.sort((a,b) => a.price - b.price);
+    if (sort === 'price-asc')       items.sort((a,b) => a.price - b.price);
     else if (sort === 'price-desc') items.sort((a,b) => b.price - a.price);
     else if (sort === 'name-asc')   items.sort((a,b) => a.product_name.localeCompare(b.product_name));
 
-    const grid     = document.getElementById('favGrid');
-    const empty    = document.getElementById('favEmpty');
-    const countEl  = document.getElementById('favCountNum');
+    const grid    = document.getElementById('favGrid');
+    const empty   = document.getElementById('favEmpty');
+    const countEl = document.getElementById('favCountNum');
 
     if (countEl) countEl.textContent = items.length;
 
@@ -114,12 +115,16 @@ function renderFavs() {
             <div class="card-info">
                 <div class="card-mid">
                     <p class="card-name">${item.product_name}</p>
-                    <p class="card-price">₱${parseFloat(item.price).toFixed(2)}</p>
+                    <p class="card-price">&#8369;${parseFloat(item.price).toFixed(2)}</p>
                 </div>
                 <div class="card-footer">
                     <div class="card-actions">
-                        <button class="card-btn btn-cart"><i class="fa-solid fa-cart-shopping"></i> Cart</button>
-                        <button class="card-btn btn-order"><i class="fa-solid fa-bag-shopping"></i> Order</button>
+                        <button class="card-btn btn-cart" data-pname="${item.product_name}">
+                            <i class="fa-solid fa-cart-shopping"></i> Cart
+                        </button>
+                        <button class="card-btn btn-order" data-pname="${item.product_name}">
+                            <i class="fa-solid fa-bag-shopping"></i> Order
+                        </button>
                     </div>
                 </div>
             </div>
@@ -127,48 +132,65 @@ function renderFavs() {
     `).join('');
 }
 
-// ── HEART CLICK: remove from favorites ───────────────────────
+// ── SINGLE delegated click handler for the whole grid ────────
 document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.card-heart[data-pname]');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const pname = btn.getAttribute('data-pname');
-    if (pname) removeFav(pname);
-});
 
-// ── ORDER BUTTON ─────────────────────────────────────────────
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.btn-order');
-    if (!btn) return;
-    e.stopPropagation();
-    const card  = btn.closest('.product-card');
-    const name  = card.querySelector('.card-name')?.textContent.trim()   || '';
-    const price = card.querySelector('.card-price')?.textContent.replace('₱','').trim() || '';
-    const image = card.querySelector('.card-image img')?.getAttribute('src') || '';
-    const params = new URLSearchParams({ name, price, image });
-    window.location.href = 'ordercustom.php?' + params.toString();
-});
-
-// ── CART ─────────────────────────────────────────────────────
-const CART_KEY = 'boycold_cart';
-function getCart() {
-    try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-    catch(e) { return []; }
-}
-function saveCart(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
-function addToCart(name, unitPrice, image) {
-    const cart = getCart();
-    const existing = cart.find(i => i.name === name && !i.milk && !i.addons && !i.notes);
-    if (existing) {
-        existing.qty++;
-        existing.total = existing.unitPrice * existing.qty;
-    } else {
-        cart.push({ name, unitPrice, qty: 1, total: unitPrice,
-                    image: image || '', milk: '', addons: '', orderType: '', notes: '' });
+    // HEART: remove from favorites
+    const heartBtn = e.target.closest('.card-heart[data-pname]');
+    if (heartBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const pname = heartBtn.getAttribute('data-pname');
+        if (pname) removeFav(pname);
+        return; // stop — don't fall through to other handlers
     }
-    saveCart(cart);
+
+    // CART button
+    const cartBtn = e.target.closest('.btn-cart[data-pname]');
+    if (cartBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const name = cartBtn.getAttribute('data-pname');
+        if (name) addToCartDB(cartBtn, name);
+        return;
+    }
+
+    // ORDER button
+    const orderBtn = e.target.closest('.btn-order[data-pname]');
+    if (orderBtn) {
+        e.stopPropagation();
+        const card  = orderBtn.closest('.product-card');
+        const name  = card.querySelector('.card-name')?.textContent.trim()  || '';
+        const price = card.querySelector('.card-price')?.textContent.replace('₱','').trim() || '';
+        const image = card.querySelector('.card-image img')?.getAttribute('src') || '';
+        const params = new URLSearchParams({ name, price, image });
+        window.location.href = 'ordercustom.php?' + params.toString();
+        return;
+    }
+});
+
+// ── ADD TO CART via DB API ────────────────────────────────────
+async function addToCartDB(btn, productName) {
+    btn.disabled = true;
+    try {
+        const res  = await fetch('../api/cart_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add', product_name: productName, quantity: 1 })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showCartToast(productName);
+        } else {
+            alert('Failed to add to cart. Please try again.');
+        }
+    } catch(e) {
+        alert('Network error. Please try again.');
+    }
+    btn.disabled = false;
 }
+
+// ── CART TOAST ───────────────────────────────────────────────
 function showCartToast(name) {
     const toast = document.getElementById('cartToast');
     document.getElementById('cartToastMsg').textContent = `"${name}" added to cart!`;
@@ -176,19 +198,6 @@ function showCartToast(name) {
     clearTimeout(toast._timer);
     toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
 }
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.btn-cart');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const card      = btn.closest('.product-card');
-    const name      = card.querySelector('.card-name')?.textContent.trim() || '';
-    const priceText = card.querySelector('.card-price')?.textContent.replace('₱','').replace('.00','').trim() || '0';
-    const unitPrice = parseFloat(priceText);
-    const image     = card.querySelector('.card-image img')?.getAttribute('src') || '';
-    addToCart(name, unitPrice, image);
-    showCartToast(name);
-});
 
 // ── SORT LISTENER ─────────────────────────────────────────────
 document.getElementById('favSort')?.addEventListener('change', renderFavs);

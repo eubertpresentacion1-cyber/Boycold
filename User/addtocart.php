@@ -217,8 +217,10 @@ $_SESSION['user_email'] = $user['email'];
 
     <script>
         // addtocart.php – inside <script>
-        const CART_API = 'cart_api.php';
-        const ORDER_API = 'orders_api.php'; // or checkout.php
+        const CART_API = '../api/cart_api.php';
+        const ORDER_API = '../api/orders_api.php';
+        const DELIVERY = 30;
+        const TAX = 5;
 
         let currentCart = [];
 
@@ -306,10 +308,8 @@ $_SESSION['user_email'] = $user['email'];
 
         function recalcSummary() {
             const sub = currentCart.reduce((s, i) => s + i.total, 0);
-            const delivery = 30,
-                tax = 5;
-            document.getElementById('summarySubtotal').innerText = '₱' + sub.toFixed(2);
-            document.getElementById('summaryTotal').innerText = '₱' + (sub + delivery + tax).toFixed(2);
+            document.getElementById('summarySubtotal').textContent = '₱' + sub.toFixed(2);
+            document.getElementById('summaryTotal').textContent = '₱' + (sub + DELIVERY + TAX).toFixed(2);
         }
 
         async function placeOrder() {
@@ -355,13 +355,6 @@ $_SESSION['user_email'] = $user['email'];
         document.querySelector('.btn-checkout')?.addEventListener('click', placeOrder);
         loadCart();
 
-        function recalcSummary() {
-            const cart = getCart();
-            const sub = cart.reduce((s, i) => s + i.total, 0);
-            document.getElementById('summarySubtotal').textContent = '₱' + sub.toFixed(2);
-            document.getElementById('summaryTotal').textContent = '₱' + (sub + DELIVERY + TAX).toFixed(2);
-        }
-
         /* ── Nav ── */
         const nav = document.getElementById('mainNav');
 
@@ -390,7 +383,6 @@ $_SESSION['user_email'] = $user['email'];
             }
         });
 
-        renderCart();
     </script>
 
 </body>
