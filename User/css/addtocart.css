@@ -636,7 +636,7 @@ footer {
 
     /* Cart item: rearrange to 2-row layout */
     .cart-item {
-        grid-template-columns: 70px 1fr auto;
+        grid-template-columns: 52px 1fr auto;
         grid-template-rows: auto auto;
         gap: 8px 12px;
         padding: 14px 0;
@@ -723,9 +723,9 @@ footer {
 
     /* Keep 2-row grid, same as 768px but tighter spacing */
     .cart-item {
-        grid-template-columns: 64px 1fr auto;
+        grid-template-columns: 56px 1fr auto;
         grid-template-rows: auto auto;
-        gap: 8px 12px;
+        gap: 6px 10px;
         padding: 14px 0;
     }
 
@@ -999,10 +999,10 @@ footer {
 
 .cart-item {
     display: grid;
-    grid-template-columns: 90px 1fr auto auto auto;
+    grid-template-columns: 70px 1fr auto auto auto;
     align-items: center;
-    gap: 16px;
-    padding: 18px 0;
+    gap: 14px;
+    padding: 16px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -1011,8 +1011,8 @@ footer {
 }
 
 .cart-item-img {
-    width: 90px;
-    height: 90px;
+    width: 70px;
+    height: 70px;
     border-radius: 10px;
     background: #f3ede8;
     overflow: hidden;
