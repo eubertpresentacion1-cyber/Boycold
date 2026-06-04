@@ -77,7 +77,7 @@ async function loadFavorites() {
         const data = await res.json();
         if (!data.success) return;
 
-        data.favorites.forEach(f => favSet.add(String(f.product_id)));
+        data.favorites.forEach(f => favSet.add(String(f.product_name)));
         // Reflect on cards that already exist in the DOM
         applyFavUIAll();
     } catch (e) { /* silently ignore if offline */ }
@@ -85,10 +85,10 @@ async function loadFavorites() {
 
 function applyFavUIAll() {
     document.querySelectorAll('.product-card').forEach(card => {
-        const pid  = card.getAttribute('data-product-id') || card.getAttribute('data-id');
+        const pname = card.getAttribute('data-product-name');
         const icon = card.querySelector('.card-heart i');
-        if (!pid || !icon) return;
-        if (favSet.has(String(pid))) {
+        if (!pname || !icon) return;
+        if (favSet.has(String(pname))) {
             icon.style.color = '#e53935';
             icon.style.webkitTextStroke = '0';
         } else {
@@ -106,46 +106,28 @@ document.addEventListener('click', async function(e) {
     e.stopPropagation();
 
     const card = btn.closest('.product-card');
-    // data-product-id holds the integer DB id; data-id holds the slug fallback
-    const pid  = card.getAttribute('data-product-id') || card.getAttribute('data-id');
-    if (!pid) return;
+    const pname = card.getAttribute('data-product-name');
+    if (!pname) return;
 
     const icon     = btn.querySelector('i');
-    const isFaved  = favSet.has(String(pid));
-    const numericId = parseInt(pid, 10);
+    const isFaved  = favSet.has(String(pname));
 
     // Optimistic UI update
     if (isFaved) {
-        favSet.delete(String(pid));
+        favSet.delete(String(pname));
         icon.style.color = 'transparent';
         icon.style.webkitTextStroke = '1.5px #e53935';
     } else {
-        favSet.add(String(pid));
+        favSet.add(String(pname));
         icon.style.color = '#e53935';
         icon.style.webkitTextStroke = '0';
-    }
-
-    // If pid is a slug (non-numeric), we can't call the API yet
-    // (you'd need the real numeric product_id from the DB).
-    // Add data-product-id="<?= $product['id'] ?>" to each card in PHP.
-    if (isNaN(numericId)) {
-        // Store in localStorage as fallback until data-product-id is wired
-        const local = JSON.parse(localStorage.getItem('boycold_favorites') || '[]');
-        if (isFaved) {
-            const idx = local.indexOf(pid);
-            if (idx > -1) local.splice(idx, 1);
-        } else {
-            if (!local.includes(pid)) local.push(pid);
-        }
-        localStorage.setItem('boycold_favorites', JSON.stringify(local));
-        return;
     }
 
     try {
         await fetch('../api/favorites_api.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'toggle', product_id: numericId })
+            body: JSON.stringify({ action: 'toggle', product_name: pname })
         });
     } catch (err) { /* network error — optimistic state stays */ }
 });
@@ -164,14 +146,14 @@ document.querySelectorAll('.btn-order').forEach(btn => {
 });
 
 // ── CART via DB API ──────────────────────────────────────────
-async function addToCartAPI(productId, name, price, image) {
+async function addToCartAPI(name, price, image) {
     try {
         const res = await fetch('../api/cart_api.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'add',
-                product_id: productId,
+                product_name: name,
                 quantity: 1,
                 milk: '',
                 addons: '',
@@ -227,8 +209,7 @@ document.addEventListener('click', function(e) {
     
     const card = btn.closest('.product-card');
     
-    // Try to get data from attributes first (newer data-* attributes)
-    let productId = card.dataset.productId;
+    // Get data from attributes
     let name = card.dataset.productName;
     let price = parseFloat(card.dataset.price);
     let image = card.dataset.image;
@@ -245,9 +226,9 @@ document.addEventListener('click', function(e) {
         image = card.querySelector('.card-image img')?.getAttribute('src') || '';
     }
     
-    // If we have a numeric product ID, use API; otherwise use localStorage fallback
-    if (productId && !isNaN(parseInt(productId, 10))) {
-        addToCartAPI(parseInt(productId, 10), name, price, image);
+    // Use API with product name
+    if (name) {
+        addToCartAPI(name, price, image);
     } else {
         // Fallback to localStorage
         addToCart(name, price, image);

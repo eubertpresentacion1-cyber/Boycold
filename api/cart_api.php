@@ -38,16 +38,13 @@ switch ($action) {
 
     // ── GET: return all cart items for this user ──────────────
     case 'get':
-        // cart stores product_id (FK to products table).
-        // For items added via JS (name-based), we store them in a
-        // separate "name" column. To keep backward-compatibility
-        // with the localStorage approach, we return the raw row data.
+        // cart now stores product_name instead of product_id
         $stmt = $connect->prepare(
-            "SELECT c.id, c.product_id, c.quantity, c.milk, c.addons,
+            "SELECT c.id, c.product_name, c.quantity, c.milk, c.addons,
                     c.order_type, c.notes,
-                    p.product_name, p.price, p.image
+                    p.price, p.image
              FROM   cart c
-             JOIN   products p ON p.id = c.product_id
+             JOIN   products p ON p.product_name = c.product_name
              WHERE  c.user_id = ?
              ORDER  BY c.created_at ASC"
         );
@@ -60,17 +57,17 @@ switch ($action) {
             $unitPrice = (float) $r['price'];
             $qty       = (int)   $r['quantity'];
             return [
-                'cartId'    => (int) $r['id'],
-                'productId' => (int) $r['product_id'],
-                'name'      => $r['product_name'],
-                'unitPrice' => $unitPrice,
-                'qty'       => $qty,
-                'total'     => $unitPrice * $qty,
-                'image'     => $r['image'] ?? '',
-                'milk'      => $r['milk']       ?? '',
-                'addons'    => $r['addons']     ?? '',
-                'orderType' => $r['order_type'] ?? '',
-                'notes'     => $r['notes']      ?? '',
+                'cartId'      => (int) $r['id'],
+                'productName' => $r['product_name'],
+                'name'        => $r['product_name'],
+                'unitPrice'   => $unitPrice,
+                'qty'         => $qty,
+                'total'       => $unitPrice * $qty,
+                'image'       => $r['image'] ?? '',
+                'milk'        => $r['milk']       ?? '',
+                'addons'      => $r['addons']     ?? '',
+                'orderType'   => $r['order_type'] ?? '',
+                'notes'       => $r['notes']      ?? '',
             ];
         }, $rows);
 
@@ -79,22 +76,22 @@ switch ($action) {
 
     // ── ADD: insert or increment ──────────────────────────────
     case 'add':
-        $productId = isset($body['product_id']) ? (int) $body['product_id'] : 0;
-        $qty       = isset($body['quantity'])   ? max(1, (int) $body['quantity']) : 1;
-        $milk      = substr(trim($body['milk']       ?? ''), 0, 80);
-        $addons    = substr(trim($body['addons']     ?? ''), 0, 255);
-        $orderType = substr(trim($body['order_type'] ?? ''), 0, 40);
-        $notes     = trim($body['notes'] ?? '');
+        $productName = isset($body['product_name']) ? trim($body['product_name']) : '';
+        $qty         = isset($body['quantity'])     ? max(1, (int) $body['quantity']) : 1;
+        $milk        = substr(trim($body['milk']       ?? ''), 0, 80);
+        $addons      = substr(trim($body['addons']     ?? ''), 0, 255);
+        $orderType   = substr(trim($body['order_type'] ?? ''), 0, 40);
+        $notes       = trim($body['notes'] ?? '');
 
-        if ($productId <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Invalid product_id.']);
+        if (empty($productName)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid product_name.']);
             break;
         }
 
         // INSERT … ON DUPLICATE KEY UPDATE increments quantity.
-        // The UNIQUE KEY is (user_id, product_id) in the schema.
+        // The UNIQUE KEY is (user_id, product_name) in the schema.
         $stmt = $connect->prepare(
-            "INSERT INTO cart (user_id, product_id, quantity, milk, addons, order_type, notes)
+            "INSERT INTO cart (user_id, product_name, quantity, milk, addons, order_type, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                quantity   = quantity + VALUES(quantity),
@@ -103,7 +100,7 @@ switch ($action) {
                order_type = VALUES(order_type),
                notes      = VALUES(notes)"
         );
-        $stmt->bind_param("iiissss", $userId, $productId, $qty, $milk, $addons, $orderType, $notes);
+        $stmt->bind_param("isissss", $userId, $productName, $qty, $milk, $addons, $orderType, $notes);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'message' => 'Item added to cart.']);

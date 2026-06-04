@@ -1,13 +1,10 @@
 <?php
 // ── favorites_api.php ─────────────────────────────────────────
 // Manages the favorites/wishlist for the logged-in user only.
-// product_id is the FK to the products table (integer).
-// The string-based "id" used in JS (e.g. "americano") maps to
-// products.id — use get_product_id_by_name() or store numeric IDs
-// in your menu HTML (data-product-id="1").
+// product_name is now the identifier (string) instead of product_id.
 //
-// Actions (POST JSON  { "action": "...", "product_id": N }):
-//   get    → return all favorited product IDs for this user
+// Actions (POST JSON  { "action": "...", "product_name": "..." }):
+//   get    → return all favorited product names for this user
 //   toggle → add if not present, remove if present
 //   add    → add (ignore if already exists)
 //   remove → remove
@@ -33,12 +30,12 @@ $action = $body['action'] ?? ($_GET['action'] ?? '');
 
 switch ($action) {
 
-    // ── GET: return list of favorited product IDs ─────────────
+    // ── GET: return list of favorited product names ─────────────
     case 'get':
         $stmt = $connect->prepare(
-            "SELECT f.product_id, p.product_name, p.price, p.image, p.category
+            "SELECT f.product_name, p.price, p.image, p.category
              FROM   favorites f
-             JOIN   products  p ON p.id = f.product_id
+             JOIN   products  p ON p.product_name = f.product_name
              WHERE  f.user_id = ?
              ORDER  BY f.created_at DESC"
         );
@@ -51,32 +48,32 @@ switch ($action) {
 
     // ── TOGGLE: add if not favorited, remove if already is ────
     case 'toggle':
-        $productId = isset($body['product_id']) ? (int) $body['product_id'] : 0;
-        if ($productId <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Invalid product_id.']);
+        $productName = isset($body['product_name']) ? trim($body['product_name']) : '';
+        if (empty($productName)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid product_name.']);
             break;
         }
 
         // Check current state — WHERE user_id prevents reading another user's data
         $check = $connect->prepare(
-            "SELECT id FROM favorites WHERE user_id = ? AND product_id = ?"
+            "SELECT id FROM favorites WHERE user_id = ? AND product_name = ?"
         );
-        $check->bind_param("ii", $userId, $productId);
+        $check->bind_param("is", $userId, $productName);
         $check->execute();
         $exists = $check->get_result()->num_rows > 0;
 
         if ($exists) {
             $del = $connect->prepare(
-                "DELETE FROM favorites WHERE user_id = ? AND product_id = ?"
+                "DELETE FROM favorites WHERE user_id = ? AND product_name = ?"
             );
-            $del->bind_param("ii", $userId, $productId);
+            $del->bind_param("is", $userId, $productName);
             $del->execute();
             echo json_encode(['success' => true, 'favorited' => false]);
         } else {
             $ins = $connect->prepare(
-                "INSERT IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)"
+                "INSERT IGNORE INTO favorites (user_id, product_name) VALUES (?, ?)"
             );
-            $ins->bind_param("ii", $userId, $productId);
+            $ins->bind_param("is", $userId, $productName);
             $ins->execute();
             echo json_encode(['success' => true, 'favorited' => true]);
         }
@@ -84,16 +81,16 @@ switch ($action) {
 
     // ── ADD: add without check (INSERT IGNORE handles dupe) ───
     case 'add':
-        $productId = isset($body['product_id']) ? (int) $body['product_id'] : 0;
-        if ($productId <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Invalid product_id.']);
+        $productName = isset($body['product_name']) ? trim($body['product_name']) : '';
+        if (empty($productName)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid product_name.']);
             break;
         }
 
         $stmt = $connect->prepare(
-            "INSERT IGNORE INTO favorites (user_id, product_id) VALUES (?, ?)"
+            "INSERT IGNORE INTO favorites (user_id, product_name) VALUES (?, ?)"
         );
-        $stmt->bind_param("ii", $userId, $productId);
+        $stmt->bind_param("is", $userId, $productName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'favorited' => true]);
@@ -101,17 +98,17 @@ switch ($action) {
 
     // ── REMOVE ────────────────────────────────────────────────
     case 'remove':
-        $productId = isset($body['product_id']) ? (int) $body['product_id'] : 0;
-        if ($productId <= 0) {
-            echo json_encode(['success' => false, 'error' => 'Invalid product_id.']);
+        $productName = isset($body['product_name']) ? trim($body['product_name']) : '';
+        if (empty($productName)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid product_name.']);
             break;
         }
 
         // WHERE user_id prevents removing another user's favorite
         $stmt = $connect->prepare(
-            "DELETE FROM favorites WHERE user_id = ? AND product_id = ?"
+            "DELETE FROM favorites WHERE user_id = ? AND product_name = ?"
         );
-        $stmt->bind_param("ii", $userId, $productId);
+        $stmt->bind_param("is", $userId, $productName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'favorited' => false]);

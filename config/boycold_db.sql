@@ -59,18 +59,18 @@ CREATE TABLE IF NOT EXISTS `products` (
 --  UNIQUE(user_id, product_id) prevents duplicate rows.
 -- ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `cart` (
-  `id`         INT      NOT NULL AUTO_INCREMENT,
-  `user_id`    INT      NOT NULL,
-  `product_id` INT      NOT NULL,
-  `quantity`   INT      NOT NULL DEFAULT 1,
-  `milk`       VARCHAR(80)       DEFAULT NULL,
-  `addons`     VARCHAR(255)      DEFAULT NULL,
-  `order_type` VARCHAR(40)       DEFAULT NULL,
-  `notes`      TEXT              DEFAULT NULL,
-  `created_at` DATETIME          DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME          DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`           INT      NOT NULL AUTO_INCREMENT,
+  `user_id`      INT      NOT NULL,
+  `product_name` VARCHAR(255) NOT NULL,
+  `quantity`     INT      NOT NULL DEFAULT 1,
+  `milk`         VARCHAR(80)       DEFAULT NULL,
+  `addons`       VARCHAR(255)      DEFAULT NULL,
+  `order_type`   VARCHAR(40)       DEFAULT NULL,
+  `notes`        TEXT              DEFAULT NULL,
+  `created_at`   DATETIME          DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`   DATETIME          DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_cart_user_product` (`user_id`, `product_id`)
+  UNIQUE KEY `uq_cart_user_product` (`user_id`, `product_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ────────────────────────────────────────────────────────────
@@ -78,12 +78,12 @@ CREATE TABLE IF NOT EXISTS `cart` (
 --  user_id ensures favorites are per-user.
 -- ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `favorites` (
-  `id`         INT      NOT NULL AUTO_INCREMENT,
-  `user_id`    INT      NOT NULL,
-  `product_id` INT      NOT NULL,
-  `created_at` DATETIME          DEFAULT CURRENT_TIMESTAMP,
+  `id`           INT      NOT NULL AUTO_INCREMENT,
+  `user_id`      INT      NOT NULL,
+  `product_name` VARCHAR(255) NOT NULL,
+  `created_at`   DATETIME          DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_fav_user_product` (`user_id`, `product_id`)
+  UNIQUE KEY `uq_fav_user_product` (`user_id`, `product_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ────────────────────────────────────────────────────────────

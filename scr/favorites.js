@@ -62,16 +62,16 @@ async function fetchFavorites() {
     renderFavs();
 }
 
-async function removeFav(productId) {
+async function removeFav(productName) {
     // Optimistic removal
-    favItems = favItems.filter(f => f.product_id !== productId);
+    favItems = favItems.filter(f => f.product_name !== productName);
     renderFavs();
 
     try {
         await fetch('../api/favorites_api.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'remove', product_id: productId })
+            body: JSON.stringify({ action: 'remove', product_name: productName })
         });
     } catch(e) { /* ignore */ }
 }
@@ -99,12 +99,12 @@ function renderFavs() {
     if (grid)  grid.style.display  = 'grid';
 
     grid.innerHTML = items.map(item => `
-        <div class="product-card" data-category="${item.category ?? ''}" data-product-id="${item.product_id}">
+        <div class="product-card" data-category="${item.category ?? ''}" data-product-name="${item.product_name}">
             <div class="card-image">
                 <div class="card-image-placeholder">
                     <div class="card-top">
                         <span class="card-badge">Popular<i class="fa-solid fa-star"></i></span>
-                        <button class="card-heart fav-active" data-pid="${item.product_id}" title="Remove from favorites">
+                        <button class="card-heart fav-active" data-pname="${item.product_name}" title="Remove from favorites">
                             <i class="fa-solid fa-heart" style="color:#e53935; -webkit-text-stroke:0;"></i>
                         </button>
                     </div>
@@ -129,12 +129,12 @@ function renderFavs() {
 
 // ── HEART CLICK: remove from favorites ───────────────────────
 document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.card-heart[data-pid]');
+    const btn = e.target.closest('.card-heart[data-pname]');
     if (!btn) return;
     e.preventDefault();
     e.stopPropagation();
-    const pid = parseInt(btn.getAttribute('data-pid'), 10);
-    if (!isNaN(pid)) removeFav(pid);
+    const pname = btn.getAttribute('data-pname');
+    if (pname) removeFav(pname);
 });
 
 // ── ORDER BUTTON ─────────────────────────────────────────────
