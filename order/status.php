@@ -65,10 +65,11 @@ $_SESSION['user_email'] = $user['email'];
             <a href="../User/account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
-                        <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                         <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                     <?php endif; ?>
                 </div>
             </a>
@@ -103,9 +104,11 @@ $_SESSION['user_email'] = $user['email'];
             <div class="avatar-dropdown-wrap">
                 <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
                     <?php if ($avatar): ?>
-                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar">
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
-                        <i class="fa-solid fa-user"></i>
+                        <img id="navAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="navAvatarIcon"></i>
                     <?php endif; ?>
                 </div>
                 <div class="avatar-dropdown" id="avatarDropdown">
@@ -250,10 +253,6 @@ $_SESSION['user_email'] = $user['email'];
         </div><!-- end .order-card -->
 
     </main>
-
-    <!-- ══════════════════════════════
-         MODAL: Contact Rider
-    ══════════════════════════════ -->
     <div class="modal-overlay" id="riderModal" onclick="closeRiderModal(event)">
         <div class="modal">
             <button class="modal-close" onclick="closeRiderModalDirect()">&times;</button>
@@ -287,10 +286,6 @@ $_SESSION['user_email'] = $user['email'];
             </div>
         </div>
     </div>
-
-    <!-- ══════════════════════════════
-         MODAL: Report a Problem
-    ══════════════════════════════ -->
     <div class="modal-overlay" id="reportModal" onclick="closeReportModal(event)">
         <div class="modal">
             <button class="modal-close" onclick="closeReportModalDirect()">&times;</button>
@@ -392,7 +387,7 @@ $_SESSION['user_email'] = $user['email'];
             <div class="footer-logo">
                 <img src="../picture/icon2.png" alt="BoyCold logo">
                 <h1>BOYCOLD CAFE</h1>
-                <p>© 2024 BoyCold Cafe. All rights reserved.</p>
+                <p>© 2026 BoyCold Cafe. All rights reserved.</p>
             </div>
             <div class="footer-links">
                 <ul>

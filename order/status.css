@@ -6,7 +6,7 @@
 body {
     overflow-x: hidden;
     font-family: 'Afacad', sans-serif;
-    background: url('/BoyColdv2/picture/background2.png') center -40px / cover no-repeat #000;
+    background: url('/picture/background2.png') center -40px / cover no-repeat #000;
 }
 
 html {
@@ -202,7 +202,7 @@ html {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 65px;
+    gap: 45px;
     padding-right: 35px;
 }
 

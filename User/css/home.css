@@ -419,7 +419,7 @@ header .box {
         rgba(30, 30, 30, 38%),
         rgba(30, 30, 30, 0)
     ),
-    url('/BoyColdv2/picture/background.png');
+    url('/picture/background.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

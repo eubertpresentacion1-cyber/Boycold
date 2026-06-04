@@ -1,13 +1,98 @@
+async function handleAvatarFile(file) {
+    if (!file) return;
 
+    const avatarMsg = document.getElementById('avatar-msg');
+    const profileImg = document.getElementById('profileAvatarImg');
+    const sidebarImg = document.getElementById('sidebarAvatarImg');
+    const navImg = document.getElementById('navAvatarImg');
+    const sidebarIcon = document.getElementById('sidebarAvatarIcon');
+    const navIcon = document.getElementById('navAvatarIcon');
+
+    // Instant local preview
+    const localURL = URL.createObjectURL(file);
+    if (profileImg) {
+        profileImg.src = localURL;
+        profileImg.style.cssText = 'position:absolute;inset:0;width:110px;height:110px;object-fit:cover;border-radius:50%;display:block;';
+    }
+    if (sidebarImg) {
+        sidebarImg.src = localURL;
+        sidebarImg.style.display = '';
+    }
+    if (navImg) {
+        navImg.src = localURL;
+        navImg.style.display = 'block';
+    }
+    if (navIcon) {
+        navIcon.style.display = 'none';
+    }
+    if (sidebarIcon) {
+        sidebarIcon.style.display = 'none';
+    }
+
+    avatarMsg.style.color = '#888';
+    avatarMsg.textContent = 'Uploading…';
+
+    const fd = new FormData();
+    fd.append('avatar', file);
+
+    try {
+        const res = await fetch('uploadavatar.php', {
+            method: 'POST',
+            body: fd
+        });
+        const data = await res.json();
+        if (data.success) {
+            const newSrc = data.path + '?v=' + Date.now();
+            if (profileImg) profileImg.src = newSrc;
+            if (sidebarImg) sidebarImg.src = newSrc;
+            if (navImg) navImg.src = newSrc;
+            if (navIcon) navIcon.style.display = 'none';
+            avatarMsg.style.color = '#27ae60';
+            // Show the success message from the server (database update confirmation)
+            avatarMsg.textContent = data.message || 'Photo updated!';
+            setTimeout(() => {
+                avatarMsg.textContent = '';
+            }, 3000);
+        } else {
+            avatarMsg.style.color = '#c0392b';
+            avatarMsg.textContent = data.error || 'Upload failed.';
+        }
+    } catch (err) {
+        avatarMsg.style.color = '#c0392b';
+        avatarMsg.textContent = 'Network error. Try again.';
+    }
+
+    URL.revokeObjectURL(localURL);
+    document.getElementById('avatarFileInput').value = '';
+    document.getElementById('avatarCameraInput').value = '';
+}
+
+const avatarFileInput = document.getElementById('avatarFileInput');
+const avatarCameraInput = document.getElementById('avatarCameraInput');
+if (avatarFileInput) avatarFileInput.addEventListener('change', function () {
+    handleAvatarFile(this.files[0]);
+});
+if (avatarCameraInput) avatarCameraInput.addEventListener('change', function () {
+    handleAvatarFile(this.files[0]);
+});
+
+// ── Avatar hover overlay ───────────────────────────────────
+const avatarWrap = document.getElementById('profileAvatarWrap');
+const avatarOverlay = document.getElementById('avatarOverlay');
+if (avatarWrap && avatarOverlay) {
+    avatarWrap.addEventListener('mouseenter', () => avatarOverlay.style.opacity = '1');
+    avatarWrap.addEventListener('mouseleave', () => avatarOverlay.style.opacity = '0');
+}
+
+// ── Nav avatar dropdown ────────────────────────────────────
 function toggleAvatarDropdown() {
     document.getElementById('avatarDropdown').classList.toggle('open');
 }
-
 document.addEventListener('click', function (e) {
-    const drop = document.getElementById('avatarDropdown');
-    const btn = document.getElementById('navAvatarBtn');
-    if (drop && btn && !btn.contains(e.target) && !drop.contains(e.target)) {
-        drop.classList.remove('open');
+    const wrap = document.querySelector('.avatar-dropdown-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        const dd = document.getElementById('avatarDropdown');
+        if (dd) dd.classList.remove('open');
     }
 });
 

@@ -234,7 +234,7 @@ html {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 65px;
+    gap: 45px;
     padding-right: 35px;
 }
 
@@ -516,7 +516,7 @@ html {
     position: relative;
     flex: 1;
     min-height: 220px;
-    background-image: url('/Boycoldv2/picture/Rectangle 78.png');
+    background-image: url('/picture/Rectangle 78.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

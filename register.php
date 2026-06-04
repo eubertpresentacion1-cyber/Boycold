@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ip         = $_SERVER['REMOTE_ADDR'];
 
             $ins = $connect->prepare(
-                "INSERT INTO otp (firstname, lastname, email, password, otp, type, status, otp_send, ip)
+                "INSERT INTO otp (firstname, lastname, email, password, otp, type, status, otp_sent, ip)
                  VALUES (?, ?, ?, ?, ?, 'register', 'pending', NOW(), ?)"
             );
             $ins->bind_param("ssssss", $firstname, $lastname, $email, $hashedPass, $otp, $ip);

@@ -6,7 +6,7 @@
 body {
     overflow-x: hidden;
     font-family: 'Afacad', sans-serif;
-    background: url('/Boycoldv2/picture/Background2.png') center -40px / cover no-repeat #000;
+    background: url('/picture/Background2.png') center -40px / cover no-repeat #000;
 }
 
 html {

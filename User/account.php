@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch latest user data
-// Fetch latest user data
 $stmt = $connect->prepare(
     "SELECT firstname, lastname, email, phone, address, avatar, card_no FROM users WHERE id = ?"
 );

@@ -9,53 +9,35 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
-$successMsg = '';
-$errorMsg   = '';
 
-// Handle AJAX / POST save for phone or address
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $field = $_POST['field'] ?? '';
-    $value = trim($_POST['value'] ?? '');
+// Check if the user has any items in their cart (direct DB query)
+$stmt = $connect->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$stmt->bind_result($cartItemCount);
+$stmt->fetch();
+$stmt->close();
 
-    if ($field === 'phone') {
-        // Basic Philippine mobile validation (optional — 11 digits starting with 09)
-        if ($value !== '' && !preg_match('/^09\d{9}$/', $value)) {
-            $errorMsg = 'Phone must be an 11-digit number starting with 09 (e.g. 09123456789).';
-        } else {
-            $stmt = $connect->prepare("UPDATE users SET phone=? WHERE id=?");
-            $stmt->bind_param("si", $value, $userId);
-            $stmt->execute();
-            $_SESSION['user_phone'] = $value;
-            $successMsg = 'Phone number updated.';
-        }
-    } elseif ($field === 'address') {
-        if ($value === '') {
-            $errorMsg = 'Address cannot be empty.';
-        } else {
-            $stmt = $connect->prepare("UPDATE users SET address=? WHERE id=?");
-            $stmt->bind_param("si", $value, $userId);
-            $stmt->execute();
-            $_SESSION['user_address'] = $value;
-            $successMsg = 'Address updated.';
-        }
-    }
+// If cart has items, redirect to the detailed cart page (addtocart.php)
+if ($cartItemCount > 0) {
+    header('Location: addtocart.php');
+    exit;
 }
 
-// Fetch latest user data
-$stmt = $connect->prepare("SELECT Firstname, Lastname, email, phone, address, avatar FROM users WHERE id=?");
+// No items – fetch user data for sidebar display
+$stmt = $connect->prepare("SELECT firstname, lastname, email, avatar FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-$fullName = htmlspecialchars($user['Firstname'] . ' ' . $user['Lastname']);
+$fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
 $email    = htmlspecialchars($user['email']);
-$phone    = $user['phone']   ? htmlspecialchars($user['phone'])   : '';
-$address  = $user['address'] ? htmlspecialchars($user['address']) : '';
-$avatar   = $user['avatar']  ? htmlspecialchars($user['avatar'])  : '';
-// Keep session in sync
+$avatar   = $user['avatar'] ?? '';
+
+// Keep session data in sync
 if ($avatar) $_SESSION['user_avatar'] = $avatar;
-// Keep name & email in session so other pages can read them
-$_SESSION['user_name']  = $user['Firstname'] . ' ' . $user['Lastname'];
+$_SESSION['user_name']  = $user['firstname'] . ' ' . $user['lastname'];
 $_SESSION['user_email'] = $user['email'];
 ?>
 
@@ -65,7 +47,7 @@ $_SESSION['user_email'] = $user['email'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/cart.css">
-    <link rel="icon" href="/Boycoldv2/picture/icon.png" type="image/png">
+    <link rel="icon" href="/picture/icon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
@@ -81,7 +63,7 @@ $_SESSION['user_email'] = $user['email'];
             <ul>
                 <li class="sidebar-nav-only"><a href="home.php">HOME</a></li>
                 <li class="sidebar-nav-only"><a href="menu.php">MENU</a></li>
-                <li class="sidebar-nav-only"><a href="#">FAVORITES</a></li>
+                <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
                 <li class="sidebar-nav-only"><a href="orderstatus.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="stores.php">FIND A STORE</a></li>
             </ul>
@@ -115,12 +97,12 @@ $_SESSION['user_email'] = $user['email'];
             <ul class="nav-links">
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
-                <li><a href="#">FAVORITES</a></li>
+                <li><a href="favorites.php">FAVORITES</a></li>
                 <li><a href="orderstatus.php">ORDERS</a></li>
             </ul>
         </div>
         <div class="logo">
-            <img src="/Boycoldv2/picture/BoyCold Logo 2.png" alt="BoyCold">
+            <img src="/picture/BoyCold Logo 2.png" alt="BoyCold">
         </div>
         <div class="nav-right-group">
             <a href="cart.php" class="cart-link">
@@ -154,15 +136,15 @@ $_SESSION['user_email'] = $user['email'];
         <!-- UNIFIED CART BOX -->
         <div class="cart-box">
 
-            <!-- LEFT: CART ITEMS -->
+            <!-- LEFT: CART ITEMS (empty state) -->
             <div class="cart-left">
                 <h2 class="panel-title">CART ITEMS</h2>
                 <div class="empty-cart-state">
                     <div class="empty-cart-icon-wrap">
                         <i class="fa-solid fa-cart-shopping empty-cart-icon"></i>
                     </div>
-                    <h3 class="empty-cart-title">You don't have any orders</h3>
-                    <p class="empty-cart-desc">Your cart is currently empty.<br>Browse our menu and find your next favorite drink!</p>
+                    <h3 class="empty-cart-title">Your cart is empty</h3>
+                    <p class="empty-cart-desc">Browse our menu and find your next favorite drink!</p>
                     <a href="menu.php" class="empty-cart-cta">Browse Menu</a>
                 </div>
                 <div class="continue-shopping">
@@ -172,7 +154,7 @@ $_SESSION['user_email'] = $user['email'];
                 </div>
             </div>
 
-            <!-- RIGHT: ORDER SUMMARY -->
+            <!-- RIGHT: ORDER SUMMARY (disabled) -->
             <div class="cart-right">
                 <h2 class="panel-title">ORDER SUMMARY</h2>
                 <div class="summary-divider"></div>
@@ -198,7 +180,7 @@ $_SESSION['user_email'] = $user['email'];
     <footer>
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="/Boycoldv2/picture/icon2.png" alt="BoyCold logo">
+                <img src="/picture/icon2.png" alt="BoyCold logo">
                 <h1>BOYCOLD CAFE</h1>
                 <p>&copy; 2024 BoyCold Cafe. All rights reserved.</p>
             </div>
@@ -215,6 +197,9 @@ $_SESSION['user_email'] = $user['email'];
     </footer>
 
     <script>
+        // No localStorage check – the PHP already redirects if cart has items.
+        // This page is only shown when cart is truly empty.
+
         const nav = document.getElementById('mainNav');
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

@@ -6,7 +6,7 @@
 body {
     overflow-x: hidden;
     min-height: 100vh;
-    background: url('/Boycoldv2/picture/aa3044d0-6480-46e4-96e1-4429219722b8 1.png') center top / cover no-repeat, #000;
+    background: url('/picture/aa3044d0-6480-46e4-96e1-4429219722b8 1.png') center top / cover no-repeat, #000;
 }
 
 html, body { 
@@ -102,11 +102,6 @@ html, body {
     margin-left: 55px;
 }
 
-.sidebar-avatar i{
-    font-size: 28px;
-    color: #fff;
-}
-
 .sidebar-avatar img {
     width: 100%;
     height: 100%;
@@ -115,7 +110,11 @@ html, body {
     display: block;
 }
 
-/* Make the avatar link clickable and preserve layout */
+.sidebar-avatar i{
+    font-size: 28px;
+    color: #fff;
+}
+
 .sidebar-avatar-link {
     text-decoration: none;
     display: inline-block;
@@ -229,7 +228,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 65px;
+    gap: 45px;
     padding-right: 35px;
 }
 
@@ -270,7 +269,7 @@ html, body {
     padding: 8px 16px;
     width: clamp(160px, 20vw, 280px);
     transition: border-color 0.2s, box-shadow 0.2s;
-    margin-right: 160px;
+    margin-right: 0;
 }
 
 .nav-search:focus-within {
@@ -352,21 +351,18 @@ header .box {
     justify-content: center;
     align-items: center;
     background: #1e1e1e;
-    /* Changed min-width to 90% so it doesn't hit screen edges on mobile */
-    width: clamp(200px, 82%, 1300px);
     height: clamp(50px, 18vw, 70px);
     border-bottom-left-radius: 30px;
     border-bottom-right-radius: 30px;
     z-index: 100;
-    /* Removed padding from here */
-    overflow: visible; /* Ensures the border-radius clips the content */
+    overflow: visible;
 }
 
 .box ul {
     list-style: none;
     display: flex;
     flex-direction: row;
-    gap: 15px; /* Slightly reduced gap for better mobile fit */
+    gap: 15px;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none; 
@@ -396,7 +392,7 @@ header .box {
 }
 
 .box ul li {
-    flex-shrink: 0;      /* prevent items from squishing */
+    flex-shrink: 0;
 }
 
 .box ul li a {
@@ -455,6 +451,8 @@ header .box {
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
     border: 1px solid #fff;
+    flex-direction: column;
+    display: flex;
 }
 
 .product-card,
@@ -514,10 +512,9 @@ header .box {
     -webkit-text-stroke: 1.5px #e53935;
 }
 
-/* Product image area */
 .card-image {
     width: 100%;
-    height: 220px;
+    height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -527,29 +524,31 @@ header .box {
 
 .card-image img {
     width: 100%;
-    height: 81%;
+    height: 70%;
     object-fit: contain;
-    box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
-    margin: 10px;
+    margin-top: 10px;
     position: relative;
-    top: 7px;
-    left: 7px;
 }
 
 /* Placeholder image (cup silhouette) when no real image */
 .card-image-placeholder {
     width: 100%;
-    height: 98%;
+    height: 200px;
     background: #fff;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    margin-top:2px;
 }
 
 /* Product info below image */
 .card-info {
     padding: 0px 10px 0px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .card-name {
@@ -557,48 +556,75 @@ header .box {
     font-size: 20px;
     font-weight: 600;
     color: #fff;
-    margin-bottom: 8px;
-    line-height: 1.2;
+    line-height: 1;
+    width: auto;        /* ← was 1050px, remove it */
+    flex: 1;            /* take available space in card-mid */
+    min-width: 0;       /* prevent overflow */
+    margin-top: 5px;
 }
 
 /* Price + add button row */
 .card-footer {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 6px;
+    margin-top: auto;
     margin-bottom: 10px;
 }
 
 .card-price {
     font-family: 'Afacad', sans-serif;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 500;
     color: #fff;
 }
 
-.card-add {
-    width: 70px;
+.card-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.card-btn {
+    flex: 1;
     height: 30px;
     border-radius: 8px;
-    background: #fff;
-    border: 2px solid #fff;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 4px;
+    font-family: 'Afacad', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
+    transition: background 0.15s;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
-.card-add:hover {
-    background: #1e1e1e;
+.btn-cart {
+    background: #fff;
+    color: #1e1e1e;
+}
+
+.btn-cart:hover {
+    background: #e0e0e0;
+}
+
+.btn-order {
+    background: #6F4E37;
     color: #fff;
 }
 
-.card-add i {
-    font-size: 16px;
-    color: inherit;
+.btn-order:hover {
+    background: #5a3d2b;
+}
+
+.card-btn i {
+    font-size: 13px;
 }
 
 footer {
@@ -761,49 +787,8 @@ footer {
     }
 
     header .box {
-        position: fixed;
-        top: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: #1e1e1e;
-        /* Changed min-width to 90% so it doesn't hit screen edges on mobile */
-        width: clamp(200px, 82%, 1200px); 
-        height: clamp(50px, 18vw, 70px);
-        border-bottom-left-radius: 30px;
-        border-bottom-right-radius: 30px;
-        z-index: 100;
-        /* Removed padding from here */
-        overflow: visible; /* Ensures the border-radius clips the content */
-    }
-
-    .box ul {
-        list-style: none;
-        display: flex;
-        flex-direction: row;
-        gap: 15px; /* Slightly reduced gap for better mobile fit */
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        
-        /* Hiding scrollbar */
-        scrollbar-width: none; 
-        -ms-overflow-style: none;
-        
-        align-items: center;
-        width: 100%;
-        height: 100%;
-        
-        /* KEY FIX: Horizontal padding on the UL */
-        /* This creates the "buffer" so items don't touch the curved edges when scrolling */
-        padding: 0 25px;
-    }
-    .box ul li:first-child { 
-        padding-left: 10px; 
-    }
-    .box ul li:last-child  { 
-        padding-right: 10px; 
+        width: clamp(200px, 82%, 1200px);
+        height: clamp(50px, 7vw, 70px);
     }
 
     .menu-content {
@@ -817,37 +802,29 @@ footer {
         gap: 20px;
     }
 
-    .card-image img {
-        margin: 0;
-        padding: 0;
-        position: relative;
-        top: -1px;
-    }
-
-    .card-image-placeholder {
-        width: 100%;
-        height: 98%;
-    }
-
     .card-top {
         margin-top: 10px;
-        gap: 190px;
     }
+
     .sidebar-nav-only-not {
         display: none;
     }
 }
 
+/* ── HIDE NAV LINKS, SHOW HAMBURGER (≤900px) ── */
 @media (max-width: 900px) {
     .nav-links {
         display: none;
     }
+
     .hamburger {
         display: flex;
     }
+
     .sidebar-nav-only {
         display: block;
     }
+
     .sidebar-nav-only-not {
         display: none;
     }
@@ -913,181 +890,133 @@ footer {
     }
 
     .nav-links {
-        display: none;   /* hide nav links on mobile, sidebar handles it */
+        display: none;
     }
 
     .nav-search {
-        position: absolute;
-        right: -150px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        align-items: center;
-        flex-direction: row;
-        gap: 8px;
-        width: 46px;              /* collapsed = just the icon width */
-        overflow: hidden;
-        padding: 10px 10px;
-        border-radius: 10px;
-        background: transparent;
-        border: 1.5px solid transparent;
-        cursor: pointer;
-        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                    background 0.3s ease,
-                    border-color 0.3s ease;
+        margin-left: 45px;
     }
 
-    .nav-search.open {
-        width: clamp(150px, 55vw, 267px);
-        background: #fff;
-        border-color: #6F4E37;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        cursor: default;
+    .cart-link {
+        display: none;
     }
 
-    .nav-search input {
-        border: none;
-        background: transparent;
-        outline: none;
-        font-family: 'Afacad', sans-serif;
-        font-size: 14px;
-        color: #1e1e1e;
-        width: 0;
-        min-width: 0;
-        flex: 1;
-        opacity: 0;
-        order: 2;                 /* input on the LEFT */
-        transition: opacity 0.3s ease;
-        pointer-events: none;
+    .avatar-dropdown-wrap {
+        display: none;
     }
 
-    .nav-search.open input {
-        opacity: 1;
-        pointer-events: all;
-    }
-    .nav-search input::placeholder {
-        color: #aaa;
-    }
-
-    .nav-search-icon-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 10%;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        font-size: 20px;
-        color: #1e1e1e;
-        flex-shrink: 0;
-        z-index: 1003;
-        position: relative;
-        transition: color 0.3s ease;
+    /* Sidebar */
+    .sidebar {
+        top: 60px;
+        height: calc(100vh - 60px);
+        width: 260px;
     }
 
-    .nav-search-icon-btn.active {
-        color: #6F4E37;
+    .sidebar-nav ul {
+        padding: 20px;
+        gap: 16px;
     }
 
-    .nav-search i {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
+    .sidebar-nav ul li a {
         font-size: 15px;
-        color: #1e1e1e;
-        cursor: pointer;
+        padding: 10px 20px;
+    }
+
+    .sidebar-avatar {
+        width: 32px;
+        height: 32px;
+        margin-left: 0;
+    }
+
+    .sidebar-avatar i {
+        font-size: 18px;
+    }
+
+    .sidebar-avatar-link {
+        text-decoration: none;
+        display: inline-block;
         flex-shrink: 0;
-        transition: color 0.3s ease;
-        z-index: 1;
+        line-height: 0;
     }
 
-    .nav-search.open i {
-        color: #6F4E37;
+    .sidebar-user {
+        padding: 16px;
     }
 
+    .sidebar-user-info {
+        gap: 0;
+    }
+
+    .sidebar-user-name {
+        font-size: 13px;
+    }
+
+    .sidebar-user-email {
+        font-size: 11px;
+    }
+
+    /* Category filter bar */
     header {
         padding-top: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
     }
 
     header .box {
         top: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 32px);   /* full width with breathing room */
+        width: calc(100% - 32px);
         height: 48px;
         border-bottom-left-radius: 20px;
         border-bottom-right-radius: 20px;
     }
 
     .box ul {
-        display: flex;
-        gap: 16px;
-        overflow-x: auto;
+        gap: 12px;
         padding: 0 20px;
     }
 
     .box ul li a {
         font-size: 13px;
-
-    }
-    .box ul li:first-child { 
-        padding-left: 10px; 
-    }
-    .box ul li:last-child { 
-        padding-right: 10px; 
+        padding: 4px 12px;
     }
 
+    /* Product grid */
     .menu-section {
         padding: 80px 0 40px;
     }
 
     .menu-content {
+        padding: 0 12px;
         max-width: 100%;
     }
 
     .product-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-    }
-
-    .card-image img {
-        margin: 0;
-        padding: 0;
-        position: relative;
-        top: -1px;
-   
+        gap: 12px;
     }
 
     .card-image-placeholder {
-        width: 100%;
-        height: 100%;
+        height: 170px;
     }
 
     .card-top {
-        position: relative;
-        bottom: 10px;
-        gap: 250px;
+        position: static;
+        padding: 6px 6px 0;
+        justify-content: space-between;
     }
 
     .card-name {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .card-price {
-        font-size: 18px;
+        font-size: 16px;
     }
 
-    .card-add {
-        width: 50px;
-        height: 26px;
+    .card-btn {
+        font-size: 11px;
+        height: 28px;
     }
 
+    /* Footer */
     .footer-content {
         flex-direction: column;
         align-items: center;
@@ -1098,42 +1027,22 @@ footer {
     .footer-links ul {
         align-items: center;
     }
-
-    .nav-right-group .cart-link,
-    .nav-right-group .avatar-dropdown-wrap {
-        display: none;
-    }
+    
 }
 
 /* ── SMALL MOBILE (≤480px) ── */
 @media (max-width: 480px) {
     .product-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 8px;
     }
 
-    .card
-
-    .card-image {
-        height: 130px;
-        margin: 0;
-    }
-    
-
-    .card-image img {
-        margin: 0;
-        padding: 0;
-        position: relative;
-        top: -10px;
-    }
-
-    .card-image-placeholder {
-        width: 100%;
-        height: 100%;
+    .nav-search {
+        width: clamp(100px, 28vw, 160px);
     }
 
     .card-top {
-        gap: 59px;
+        padding: 4px 4px 0;
     }
 
     .card-badge {
@@ -1142,40 +1051,34 @@ footer {
     }
 
     .card-name {
-        font-size: 14px;
+        font-size: 13px;
     }
 
     .card-price {
-        font-size: 15px;
+        font-size: 14px;
     }
 
-    .card-add {
-        width: 36px;
-        height: 24px;
+    .card-btn {
+        font-size: 10px;
+        height: 26px;
+        gap: 2px;
     }
 
-    .card-add i {
-        font-size: 12px;
+    .card-btn i {
+        font-size: 11px;
     }
 
     header .box {
-        width: 100%;
-        left: 50%;
-        transform: translateX(-50%);
+        width: calc(100% - 16px);
+        height: 44px;
     }
 
     .box ul li a {
         font-size: 12px;
         padding: 3px 10px;
     }
-    .box ul li:first-child { 
-        padding-left: 10px; 
-    }
-    .box ul li:last-child { 
-        padding-right: 10px; 
-    }
 
-    .nav-search {
-        width: clamp(100px, 28vw, 160px);
+    .menu-content {
+        padding: 0 8px;
     }
 }
