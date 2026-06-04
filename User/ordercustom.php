@@ -31,7 +31,7 @@ $productImage = isset($_GET['image']) ? htmlspecialchars(strip_tags($_GET['image
 $productAddon = isset($_GET['addon']) ? htmlspecialchars(strip_tags($_GET['addon'])) : '';
 
 // Bites items: use addon system, hide milk/espresso options
-$bitesItems  = ['French Fries', 'Chicken Poppers', 'Fries and Chicken Poppers'];
+$bitesItems  = ['French Fries', 'Chicken Poppers', 'Chicken poppers and fries', 'Fries and Chicken Poppers'];
 $isBitesItem = in_array($productName, $bitesItems);
 
 // Sauce/flavor options per item [label => price]
@@ -49,7 +49,7 @@ if ($productName === 'French Fries') {
         'No Sauce'     => 79,
         'Cheese Sauce' => 109,
     ];
-} elseif ($productName === 'Fries and Chicken Poppers') {
+} elseif ($productName === 'Chicken poppers and fries' || $productName === 'Fries and Chicken Poppers') {
     $sauceOptions = [
         'No Sauce'     => 99,
         'Cheese Sauce' => 139,
@@ -208,7 +208,6 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                 </div>
                 <?php endif; ?>
 
-                <!-- Add-ons: multi-select extras for drinks; sauce/flavor badge for bites; hidden for waffles/quesadilla -->
                 <?php if (!$isNoAddonItem): ?>
                 <div class="section" id="section-addons">
                     <div class="section-title">
