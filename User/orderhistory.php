@@ -127,7 +127,7 @@ $_SESSION['user_email'] = $user['email'];
             <a href="account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
                     <?php else: ?>
                         <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                         <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
@@ -165,7 +165,7 @@ $_SESSION['user_email'] = $user['email'];
             <div class="avatar-dropdown-wrap">
                 <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
                     <?php if ($avatar): ?>
-                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
                         <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
                         <img id="navAvatarImg" src="" alt="avatar" style="display:none;">

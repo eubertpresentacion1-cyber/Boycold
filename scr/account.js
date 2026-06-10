@@ -159,20 +159,22 @@ if (avatarModal) {
 async function handleAvatarFile(file) {
     if (!file) return;
 
-    const avatarMsg  = document.getElementById('avatar-msg');
-    const profileImg = document.getElementById('profileAvatarImg');
-    const sidebarImg = document.getElementById('sidebarAvatarImg');
-    const navImg     = document.getElementById('navAvatarImg');
-    const sidebarIcon = document.getElementById('sidebarAvatarIcon');
-    const navIcon     = document.getElementById('navAvatarIcon');
+    const avatarMsg     = document.getElementById('avatar-msg');
+    const profileImg    = document.getElementById('profileAvatarImg');
+    const profileIcon   = document.getElementById('profileAvatarIcon');
+    const sidebarImg    = document.getElementById('sidebarAvatarImg');
+    const sidebarIcon   = document.getElementById('sidebarAvatarIcon');
+    const navImg        = document.getElementById('navAvatarImg');
+    const navIcon       = document.getElementById('navAvatarIcon');
 
     // Instant local preview
     const localURL = URL.createObjectURL(file);
     if (profileImg)  { profileImg.src = localURL; profileImg.style.cssText = 'position:absolute;inset:0;width:110px;height:110px;object-fit:cover;border-radius:50%;display:block;'; }
+    if (profileIcon) { profileIcon.style.display = 'none'; }
     if (sidebarImg)  { sidebarImg.src = localURL; sidebarImg.style.display = ''; }
+    if (sidebarIcon) { sidebarIcon.style.display = 'none'; }
     if (navImg)      { navImg.src = localURL; navImg.style.display = 'block'; }
     if (navIcon)     { navIcon.style.display = 'none'; }
-    if (sidebarIcon) { sidebarIcon.style.display = 'none'; }
 
     avatarMsg.style.color = '#888';
     avatarMsg.textContent = 'Uploading…';
@@ -188,6 +190,7 @@ async function handleAvatarFile(file) {
             if (profileImg)  profileImg.src = newSrc;
             if (sidebarImg)  sidebarImg.src = newSrc;
             if (navImg)      navImg.src = newSrc;
+            if (profileIcon) profileIcon.style.display = 'none';
             if (navIcon)     navIcon.style.display = 'none';
             avatarMsg.style.color = '#27ae60';
             // Show the success message from the server (database update confirmation)
@@ -218,6 +221,51 @@ const avatarOverlay = document.getElementById('avatarOverlay');
 if (avatarWrap && avatarOverlay) {
     avatarWrap.addEventListener('mouseenter', () => avatarOverlay.style.opacity = '1');
     avatarWrap.addEventListener('mouseleave', () => avatarOverlay.style.opacity = '0');
+}
+
+// ── Avatar image error fallback ────────────────────────────
+function setupAvatarErrorHandlers() {
+    const handleImageError = function(imgElement) {
+        const wrapper = imgElement.closest('.sidebar-avatar');
+        if (!wrapper) return;
+        
+        imgElement.style.display = 'none';
+        const icon = wrapper.querySelector('.fa-solid.fa-user');
+        if (icon) {
+            icon.style.display = '';
+        }
+    };
+    
+    // Sidebar avatar
+    const sidebarImg = document.getElementById('sidebarAvatarImg');
+    if (sidebarImg && sidebarImg.src) {
+        sidebarImg.addEventListener('error', function() {
+            handleImageError(this);
+        });
+    }
+    
+    // Nav avatar
+    const navImg = document.getElementById('navAvatarImg');
+    if (navImg && navImg.src) {
+        navImg.addEventListener('error', function() {
+            handleImageError(this);
+        });
+    }
+    
+    // Profile avatar
+    const profileImg = document.getElementById('profileAvatarImg');
+    if (profileImg && profileImg.src) {
+        profileImg.addEventListener('error', function() {
+            handleImageError(this);
+        });
+    }
+}
+
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAvatarErrorHandlers);
+} else {
+    setupAvatarErrorHandlers();
 }
 
 // ── Nav avatar dropdown ────────────────────────────────────

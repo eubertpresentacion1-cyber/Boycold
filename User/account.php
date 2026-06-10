@@ -132,7 +132,8 @@ $_SESSION['user_email'] = $user['email'];
             <a href="account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
                         <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                         <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
@@ -169,7 +170,7 @@ $_SESSION['user_email'] = $user['email'];
             <div class="avatar-dropdown-wrap">
                 <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
                     <?php if ($avatar): ?>
-                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
                         <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
                         <img id="navAvatarImg" src="" alt="avatar" style="display:none;">
@@ -193,9 +194,11 @@ $_SESSION['user_email'] = $user['email'];
             <div class="card card-profile">
                 <div class="profile-avatar" id="profileAvatarWrap" onclick="openAvatarModal()" title="Click to change photo" style="cursor:pointer; position:relative;">
                     <?php if ($avatar): ?>
-                        <img id="profileAvatarImg" src="<?= $avatar ?>" alt="avatar" style="width:110px;height:110px;object-fit:cover;border-radius:50%;">
+                        <img id="profileAvatarImg" src="<?= $avatar ?>" alt="avatar" style="width:110px;height:110px;object-fit:cover;border-radius:50%;display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="profileAvatarIcon" style="display:none;font-size:2.5rem;"></i>
                     <?php else: ?>
-                        <img src="../picture/Ellipse 2.png" id="profileAvatarImg" style="width:110px;height:110px;object-fit:cover;border-radius:50%;">
+                        <img id="profileAvatarImg" src="" alt="avatar" style="width:110px;height:110px;object-fit:cover;border-radius:50%;display:none;">
+                        <i class="fa-solid fa-user" id="profileAvatarIcon" style="font-size:2.5rem;"></i>
                     <?php endif; ?>
                     <div id="avatarOverlay" style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none;">
                         <i class="fa-solid fa-camera" style="color:#fff;font-size:1.4rem;"></i>

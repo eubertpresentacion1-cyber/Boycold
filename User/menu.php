@@ -59,7 +59,7 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             <a href="account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
                         <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
                         <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
@@ -113,7 +113,7 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             <div class="avatar-dropdown-wrap">
                 <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
                     <?php if ($avatar): ?>
-                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
                         <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
                         <img id="navAvatarImg" src="" alt="avatar" style="display:none;">

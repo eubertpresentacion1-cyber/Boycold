@@ -387,6 +387,9 @@ html {
     flex-shrink: 0;
     background: #3a2210;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-avatar img {
@@ -397,6 +400,13 @@ html {
     object-fit: cover;
     border-radius: 50%;
     display: block;
+}
+
+.profile-avatar i {
+    font-size: 2.5rem;
+    color: #fff;
+    position: relative;
+    z-index: 1;
 }
 
 .profile-info {
