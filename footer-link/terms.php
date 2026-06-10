@@ -62,11 +62,10 @@ $_SESSION['user_email'] = $user['email'];
             <a href="/User/account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
-                        <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
                     <?php else: ?>
-                        <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
                         <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
+                        <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
                     <?php endif; ?>
                 </div>
             </a>
