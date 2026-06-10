@@ -48,9 +48,9 @@ $_SESSION['user_email'] = $user['email'];
             <ul>
                 <li><a href="Home.php">HOME</a></li>
                 <li><a href="Menu.php">MENU</a></li>
-                <li><a href="../order/status.php">ORDER</a></li>
+                <li><a href="status.php">ORDER</a></li>
                 <li><a href="../store/store.php">STORES</a></li>
-                <li class="sidebar-nav-only-not"><a href="../order/status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
                 <li><a href="../order/cart.php" class="cart-link">
                         <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
@@ -86,7 +86,7 @@ $_SESSION['user_email'] = $user['email'];
             <ul class="nav-links">
                 <li><a href="Home.php">HOME</a></li>
                 <li><a href="Menu.php">MENU</a></li>
-                <li><a href="../order/status.php">ORDERS</a></li>
+                <li><a href="status.php">ORDERS</a></li>
                 <li><a href="favorites.php">FAVORITES</a></li>
             </ul>
         </div>
@@ -163,23 +163,23 @@ $_SESSION['user_email'] = $user['email'];
     </section>
 
     <footer>
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="../picture/icon2.png" alt="BoyCold logo">
-                <h1>BOYCOLD CAFE</h1>
-                <p>© 2024 BoyCold Cafe. All rights reserved.</p>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="../picture/icon2.png" alt="BoyCold logo">
+                    <h1>BOYCOLD CAFE</h1>
+                    <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
+                </div>
+                <div class="footer-links">
+                    <ul>
+                        <li><a href="../footer-link/about.php">About Us</a></li>
+                        <li><a href="../footer-link/compinfo.php">Company Information</a></li>
+                        <li><a href="../footer-link/faqs.php">FAQs</a></li>
+                        <li><a href="../footer-link/privacy.php">Privacy and Safety</a></li>
+                        <li><a href="../footer-link/terms.php">Terms and Conditions</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-links">
-                <ul>
-                    <li><a href="#">Contact Information</a></li>
-                    <li><a href="#">Customer Links</a></li>
-                    <li><a href="#">Company Information</a></li>
-                    <li><a href="#">Legal Links</a></li>
-                    <li><a href="#">Social Media Links</a></li>
-                </ul>
-            </div>
-        </div>
-    </footer>
+        </footer>
 
     <script src="../scr/account.js"></script>
 </body>

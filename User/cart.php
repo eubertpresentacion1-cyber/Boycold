@@ -64,7 +64,7 @@ $_SESSION['user_email'] = $user['email'];
                 <li class="sidebar-nav-only"><a href="home.php">HOME</a></li>
                 <li class="sidebar-nav-only"><a href="menu.php">MENU</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
-                <li class="sidebar-nav-only"><a href="orderstatus.php">ORDERS</a></li>
+                <li class="sidebar-nav-only"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="stores.php">FIND A STORE</a></li>
             </ul>
         </nav>
@@ -98,7 +98,7 @@ $_SESSION['user_email'] = $user['email'];
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
                 <li><a href="favorites.php">FAVORITES</a></li>
-                <li><a href="orderstatus.php">ORDERS</a></li>
+                <li><a href="status.php">ORDERS</a></li>
             </ul>
         </div>
         <div class="logo">
@@ -178,23 +178,23 @@ $_SESSION['user_email'] = $user['email'];
     </main>
 
     <footer>
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="/picture/icon2.png" alt="BoyCold logo">
-                <h1>BOYCOLD CAFE</h1>
-                <p>&copy; 2024 BoyCold Cafe. All rights reserved.</p>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="../picture/icon2.png" alt="BoyCold logo">
+                    <h1>BOYCOLD CAFE</h1>
+                    <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
+                </div>
+                <div class="footer-links">
+                    <ul>
+                        <li><a href="../footer-link/about.php">About Us</a></li>
+                        <li><a href="../footer-link/compinfo.php">Company Information</a></li>
+                        <li><a href="../footer-link/faqs.php">FAQs</a></li>
+                        <li><a href="../footer-link/privacy.php">Privacy and Safety</a></li>
+                        <li><a href="../footer-link/terms.php">Terms and Conditions</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-links">
-                <ul>
-                    <li><a href="#">Contact Information</a></li>
-                    <li><a href="#">Customer Links</a></li>
-                    <li><a href="#">Company Information</a></li>
-                    <li><a href="#">Legal Links</a></li>
-                    <li><a href="#">Social Media Links</a></li>
-                </ul>
-            </div>
-        </div>
-    </footer>
+        </footer>
 
     <script>
         // No localStorage check – the PHP already redirects if cart has items.

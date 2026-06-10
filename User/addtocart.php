@@ -82,9 +82,9 @@ $_SESSION['user_email'] = $user['email'];
             <ul>
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
-                <li><a href="../order/status.php">ORDER</a></li>
+                <li><a href="status.php">ORDER</a></li>
                 <li><a href="../store/store.php">STORES</a></li>
-                <li class="sidebar-nav-only-not"><a href="../order/status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
                 <li><a href="../order/cart.php" class="cart-link">
                         <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
@@ -121,7 +121,7 @@ $_SESSION['user_email'] = $user['email'];
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
                 <li><a href="favorites.php">FAVORITES</a></li>
-                <li><a href="orderstatus.php">ORDERS</a></li>
+                <li><a href="status.php">ORDERS</a></li>
             </ul>
         </div>
         <div class="logo">
@@ -381,7 +381,10 @@ $_SESSION['user_email'] = $user['email'];
             }
         }
 
-        document.querySelector('.btn-checkout')?.addEventListener('click', placeOrder);
+        document.querySelector('.btn-checkout')?.addEventListener('click', function() {
+            if (!currentCart.length) return;
+            window.location.href = 'checkout.php';
+        });
         loadCart();
 
         /* ── Nav ── */

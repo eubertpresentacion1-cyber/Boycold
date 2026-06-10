@@ -274,7 +274,7 @@ html {
     width: 100%;
     height: 100%;
     background-size: cover;
-    background: url('/BoyColdv2/picture/background2.png') center 10px / cover no-repeat;
+    background: url('/picture/background2.png') center 10px / cover no-repeat;
     background-color: #000;
     /* remove transform: scale(1.07) entirely */
 }

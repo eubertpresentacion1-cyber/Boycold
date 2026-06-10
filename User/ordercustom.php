@@ -61,9 +61,15 @@ $selectedSauce = ($productAddon && isset($sauceOptions[$productAddon])) ? $produ
 
 // Waffles & Quesadilla: hide Milk Choice and Add-ons entirely
 $noAddonItems = [
-    'Chocolate waffle', 'Biscoff waffle', 'Oreo waffle', 'Strawberry waffle',
-    'tiramisu waffle', 'ube waffle',
-    'Beef Quesadilla', 'Chicken Quesadilla', 'Messy Tuna Spinach',
+    'Chocolate waffle',
+    'Biscoff waffle',
+    'Oreo waffle',
+    'Strawberry waffle',
+    'tiramisu waffle',
+    'ube waffle',
+    'Beef Quesadilla',
+    'Chicken Quesadilla',
+    'Messy Tuna Spinach',
     'Beef Natchos',
 ];
 $isNoAddonItem = in_array($productName, $noAddonItems);
@@ -196,55 +202,55 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
 
                 <!-- Milk Choice — hidden for bites/food items -->
                 <?php if (!$isBitesItem && !$isNoAddonItem): ?>
-                <div class="section" id="section-milk">
-                    <div class="section-title">
-                        <i class="fa-solid fa-bottle-water"></i>
-                        Milk Choice
+                    <div class="section" id="section-milk">
+                        <div class="section-title">
+                            <i class="fa-solid fa-bottle-water"></i>
+                            Milk Choice
+                        </div>
+                        <div class="option-group">
+                            <button class="option active">Original</button>
+                            <button class="option">Oat Milk +₱15</button>
+                        </div>
                     </div>
-                    <div class="option-group">
-                        <button class="option active">Original</button>
-                        <button class="option">Oat Milk +₱15</button>
-                    </div>
-                </div>
                 <?php endif; ?>
 
                 <?php if (!$isNoAddonItem): ?>
-                <div class="section" id="section-addons">
-                    <div class="section-title">
-                        <i class="fa-solid fa-circle-plus"></i>
-                        <?= $isBitesItem ? 'Sauce / Flavor' : 'Add-ons' ?>
-                    </div>
+                    <div class="section" id="section-addons">
+                        <div class="section-title">
+                            <i class="fa-solid fa-circle-plus"></i>
+                            <?= $isBitesItem ? 'Sauce / Flavor' : 'Add-ons' ?>
+                        </div>
 
-                    <?php if ($isBitesItem): ?>
-                    <?php if ($hasSauceOptions): ?>
-                    <div class="sauce-option-group" id="sauceOptionGroup">
-                        <?php foreach ($sauceOptions as $label => $price): ?>
-                        <label class="sauce-option <?= $label === $selectedSauce ? 'selected' : '' ?>">
-                            <input type="radio" name="sauce-choice" value="<?= htmlspecialchars($label) ?>"
-                                   data-price="<?= $price ?>"
-                                   <?= $label === $selectedSauce ? 'checked' : '' ?>>
-                            <span class="sauce-label"><?= htmlspecialchars($label) ?></span>
-                            <span class="sauce-price">₱<?= $price ?></span>
-                        </label>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php else: ?>
-                    <div class="addon-selected-display">
-                        <span class="addon-badge">
-                            <i class="fa-solid fa-check"></i>
-                            <?= $productAddon ?: 'No Sauce' ?>
-                        </span>
-                    </div>
-                    <?php endif; ?>
-                    <?php else: ?>
-                    <div class="option-group">
-                        <button class="option">Espresso Shot +₱15</button>
-                        <button class="option">Whipped Cream +₱15</button>
-                        <button class="option">Chocolate Drizzle +₱15</button>
-                    </div>
-                    <?php endif; ?>
+                        <?php if ($isBitesItem): ?>
+                            <?php if ($hasSauceOptions): ?>
+                                <div class="sauce-option-group" id="sauceOptionGroup">
+                                    <?php foreach ($sauceOptions as $label => $price): ?>
+                                        <label class="sauce-option <?= $label === $selectedSauce ? 'selected' : '' ?>">
+                                            <input type="radio" name="sauce-choice" value="<?= htmlspecialchars($label) ?>"
+                                                data-price="<?= $price ?>"
+                                                <?= $label === $selectedSauce ? 'checked' : '' ?>>
+                                            <span class="sauce-label"><?= htmlspecialchars($label) ?></span>
+                                            <span class="sauce-price">₱<?= $price ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="addon-selected-display">
+                                    <span class="addon-badge">
+                                        <i class="fa-solid fa-check"></i>
+                                        <?= $productAddon ?: 'No Sauce' ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="option-group">
+                                <button class="option">Espresso Shot +₱15</button>
+                                <button class="option">Whipped Cream +₱15</button>
+                                <button class="option">Chocolate Drizzle +₱15</button>
+                            </div>
+                        <?php endif; ?>
 
-                </div>
+                    </div>
                 <?php endif; ?>
 
                 <div class="content-row">
@@ -294,7 +300,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                             <i class="fa-solid fa-cart-shopping"></i>
                             Add to Cart
                         </button>
-                        <button class="btn checkout-btn">
+                        <button class="btn checkout-btn" onclick="window.location.href='checkout.php'">
                             Proceed to Checkout
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -320,17 +326,17 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
 
     <script>
         /* ── Product Data from PHP ── */
-        let basePrice         = parseFloat('<?= $productPrice ?>');
-        const isBitesItem     = <?= $isBitesItem ? 'true' : 'false' ?>;
-        const isNoAddonItem   = <?= $isNoAddonItem ? 'true' : 'false' ?>;
+        let basePrice = parseFloat('<?= $productPrice ?>');
+        const isBitesItem = <?= $isBitesItem ? 'true' : 'false' ?>;
+        const isNoAddonItem = <?= $isNoAddonItem ? 'true' : 'false' ?>;
         const hasSauceOptions = <?= $hasSauceOptions ? 'true' : 'false' ?>;
-        let passedAddon       = <?= json_encode($selectedSauce ?: ($productAddon ?: 'No Sauce')) ?>;
-        let addOnTotal        = 0;
+        let passedAddon = <?= json_encode($selectedSauce ?: ($productAddon ?: 'No Sauce')) ?>;
+        let addOnTotal = 0;
 
         // If this item has sauce radio buttons, wire them up
         if (hasSauceOptions) {
             document.querySelectorAll('#sauceOptionGroup input[type="radio"]').forEach(radio => {
-                radio.addEventListener('change', function () {
+                radio.addEventListener('change', function() {
                     // Update selected styling
                     document.querySelectorAll('#sauceOptionGroup .sauce-option')
                         .forEach(el => el.classList.remove('selected'));
@@ -346,7 +352,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         }
 
         function recalcTotal() {
-            const qty   = parseInt(document.getElementById('qtyValue').textContent) || 1;
+            const qty = parseInt(document.getElementById('qtyValue').textContent) || 1;
             const total = (basePrice + addOnTotal) * qty;
             document.getElementById('totalPrice').textContent = '₱' + total.toFixed(2);
         }
@@ -363,9 +369,9 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
             // Milk row — only for drinks
             const miniMilk = document.getElementById('miniMilk');
             if (!isBitesItem && !isNoAddonItem) {
-                const milkGroup  = document.querySelector('#section-milk .option-group');
+                const milkGroup = document.querySelector('#section-milk .option-group');
                 const activeMilk = milkGroup ? milkGroup.querySelector('.option.active') : null;
-                const milkText   = activeMilk ? activeMilk.textContent.replace(/\s*\+₱\d+/, '').trim() : 'Original';
+                const milkText = activeMilk ? activeMilk.textContent.replace(/\s*\+₱\d+/, '').trim() : 'Original';
                 miniMilk.textContent = milkText + ' Milk';
             } else {
                 miniMilk.textContent = '';
@@ -379,15 +385,15 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                 addonText = '';
             } else {
                 const activeAddons = [...document.querySelectorAll('#section-addons .option.active')];
-                addonText = activeAddons.length
-                    ? activeAddons.map(b => b.textContent.replace(/\s*\+₱\d+/, '').trim()).join(', ')
-                    : 'No Add-ons';
+                addonText = activeAddons.length ?
+                    activeAddons.map(b => b.textContent.replace(/\s*\+₱\d+/, '').trim()).join(', ') :
+                    'No Add-ons';
             }
 
             // Order type
-            const orderGroup  = document.querySelector('#section-ordertype .option-group');
+            const orderGroup = document.querySelector('#section-ordertype .option-group');
             const activeOrder = orderGroup ? orderGroup.querySelector('.option.active') : null;
-            const orderText   = activeOrder ? activeOrder.textContent.trim() : 'Pick-Up';
+            const orderText = activeOrder ? activeOrder.textContent.trim() : 'Pick-Up';
             document.getElementById('miniAddons').textContent = addonText ? addonText + ' • ' + orderText : orderText;
 
             const qty = parseInt(document.getElementById('qtyValue').textContent) || 1;
@@ -398,8 +404,11 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         const CART_KEY = 'boycold_cart';
 
         function getCart() {
-            try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; }
-            catch(e) { return []; }
+            try {
+                return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+            } catch (e) {
+                return [];
+            }
         }
 
         function saveCart(cart) {
@@ -428,7 +437,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
 
             // Order type
             const activeOrder = document.querySelector('#section-ordertype .option.active');
-            const orderType   = activeOrder ? activeOrder.textContent.trim() : 'Pick-Up';
+            const orderType = activeOrder ? activeOrder.textContent.trim() : 'Pick-Up';
 
             // Special instructions
             const notes = document.querySelector('textarea')?.value.trim() || '';
@@ -437,9 +446,9 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
             const unitPrice = basePrice + addOnTotal;
 
             return {
-                id:        Date.now() + Math.random(), // unique row id
-                name:      <?= json_encode($productName) ?>,
-                image:     <?= json_encode($productImage) ?>,
+                id: Date.now() + Math.random(), // unique row id
+                name: <?= json_encode($productName) ?>,
+                image: <?= json_encode($productImage) ?>,
                 milk,
                 addons,
                 orderType,
@@ -451,14 +460,16 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         }
 
         /* ── Add to Cart button ── */
-        document.querySelector('.btn.cart-btn').addEventListener('click', async function () {
+        document.querySelector('.btn.cart-btn').addEventListener('click', async function() {
             const item = buildCartItem();
-            
+
             try {
                 // Send to database API instead of localStorage
                 const res = await fetch('../api/cart_api.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         action: 'add',
                         product_name: item.name,
@@ -481,11 +492,12 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         });
 
         /* ── Proceed to Checkout button ── */
-        document.querySelector('.btn.checkout-btn').addEventListener('click', async function () {
+        document.querySelector('.btn.checkout-btn').addEventListener('click', async function() {
             const item = buildCartItem();
-            
+            this.disabled = true;
+            this.textContent = 'Adding…';
+
             try {
-                // Send to database API
                 const res = await fetch('../api/cart_api.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -501,22 +513,26 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = 'addtocart.php';
+                    window.location.href = 'checkout.php';
                 } else {
                     alert('Failed to add to cart. Please try again.');
+                    this.disabled = false;
+                    this.innerHTML = 'Proceed to Checkout <i class="fa-solid fa-arrow-right"></i>';
                 }
             } catch (err) {
                 alert('Network error. Please try again.');
+                this.disabled = false;
+                this.innerHTML = 'Proceed to Checkout <i class="fa-solid fa-arrow-right"></i>';
             }
         });
 
         /* ── Option Buttons ── */
         document.querySelectorAll('.section .option-group').forEach(group => {
-            const section  = group.closest('.section');
-            const isAddOn  = section && section.id === 'section-addons';
+            const section = group.closest('.section');
+            const isAddOn = section && section.id === 'section-addons';
 
             group.querySelectorAll('.option').forEach(btn => {
-                btn.addEventListener('click', function () {
+                btn.addEventListener('click', function() {
                     if (isAddOn) {
                         this.classList.toggle('active');
                     } else {
@@ -535,12 +551,16 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         });
 
         /* ── Quantity ── */
-        document.getElementById('qtyMinus').addEventListener('click', function () {
+        document.getElementById('qtyMinus').addEventListener('click', function() {
             const el = document.getElementById('qtyValue');
             let q = parseInt(el.textContent);
-            if (q > 1) { el.textContent = q - 1; recalcTotal(); updateMiniCard(); }
+            if (q > 1) {
+                el.textContent = q - 1;
+                recalcTotal();
+                updateMiniCard();
+            }
         });
-        document.getElementById('qtyPlus').addEventListener('click', function () {
+        document.getElementById('qtyPlus').addEventListener('click', function() {
             const el = document.getElementById('qtyValue');
             el.textContent = parseInt(el.textContent) + 1;
             recalcTotal();
@@ -551,9 +571,9 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         const nav = document.getElementById('mainNav');
 
         function toggleSidebar() {
-            const sidebar  = document.getElementById('sidebar');
-            const overlay  = document.getElementById('sidebarOverlay');
-            const isOpen   = sidebar.classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isOpen = sidebar.classList.toggle('open');
             overlay.classList.toggle('open', isOpen);
             nav.classList.toggle('sidebar-open', isOpen);
         }
@@ -567,7 +587,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
         function toggleAvatarDropdown() {
             document.getElementById('avatarDropdown').classList.toggle('open');
         }
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             const wrap = document.querySelector('.avatar-dropdown-wrap');
             if (wrap && !wrap.contains(e.target)) {
                 const dd = document.getElementById('avatarDropdown');
@@ -577,7 +597,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
 
         function toggleSearch() {
             const search = document.getElementById('navSearch');
-            const btn    = document.getElementById('searchIconBtn');
+            const btn = document.getElementById('searchIconBtn');
             if (!search || !btn) return;
             const isOpen = search.classList.toggle('open');
             btn.classList.toggle('active', isOpen);
@@ -585,9 +605,9 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
             else search.querySelector('input').value = '';
         }
 
-        document.addEventListener('click', function (e) {
+        document.addEventListener('click', function(e) {
             const search = document.getElementById('navSearch');
-            const btn    = document.getElementById('searchIconBtn');
+            const btn = document.getElementById('searchIconBtn');
             if (!search || !btn) return;
             if (!search.contains(e.target) && !btn.contains(e.target)) {
                 search.classList.remove('open');
@@ -595,6 +615,25 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                 search.querySelector('input').value = '';
             }
         });
+
+        // ── ORDER NOW → CHECKOUT ─────────────────────────────────
+        function proceedToCheckout() {
+            const custom = buildCustomSummary();
+            const totalText = document.getElementById('ocTotal').textContent.replace('₱', '');
+            const params = new URLSearchParams({
+                name: PRODUCT_NAME,
+                price: totalText,
+                image: PRODUCT_IMAGE,
+                qty: qty,
+                size: custom.size,
+                sugar: custom.sugar,
+                milk: custom.milk,
+                ice: custom.ice,
+                addons: custom.addons,
+                notes: custom.notes
+            });
+            window.location.href = 'checkout.php?';
+        }
     </script>
 
 </body>

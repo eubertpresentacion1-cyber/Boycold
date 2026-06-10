@@ -878,6 +878,10 @@ footer {
         display: none;
     }
 
+    .cart-link {
+        display: none;
+    }
+
 
     .nav-right-group {
         gap: 18px;

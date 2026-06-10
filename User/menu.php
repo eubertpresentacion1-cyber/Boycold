@@ -1,97 +1,53 @@
 <?php
-
 session_start();
-
 require_once '../config/db_config.php';
 
-
-
 if (!isset($_SESSION['user_id'])) {
-
     header('Location: ../login.php');
-
     exit;
 }
-
-
-
 $userId = $_SESSION['user_id'];
 
-
-
 // Fetch user data for navbar
-
 $stmt = $connect->prepare("SELECT firstname, lastname, email, avatar FROM users WHERE id = ?");
-
 $stmt->bind_param("i", $userId);
-
 $stmt->execute();
-
 $user = $stmt->get_result()->fetch_assoc();
-
-
-
 $fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
-
 $email    = htmlspecialchars($user['email']);
-
 $avatar   = $user['avatar'] ?? '';
 
-
-
 // Fetch all products from DB
-
 $products = $connect->query("SELECT id, product_name, price, image, category FROM products WHERE is_available = 1 ORDER BY category, product_name");
-
 ?>
+
 
 <html lang="en">
 
-
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="css/menu.css">
-
     <link rel="icon" href="../picture/icon.png" type="image/png">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
-
     <title>BoyCold - Menu</title>
-
 </head>
 
-
-
 <body>
-
-
-
     <!-- SIDEBAR OVERLAY -->
-
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-
-
     <!-- SIDEBAR DRAWER -->
-
     <div class="sidebar" id="sidebar">
-
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
-                <li><a href="../order/status.php">ORDER</a></li>
+                <li><a href="status.php">ORDER</a></li>
                 <li><a href="../store/store.php">STORES</a></li>
-                <li class="sidebar-nav-only-not"><a href="../order/status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
                 <li><a href="../order/cart.php" class="cart-link">
                         <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
@@ -133,7 +89,7 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             <ul class="nav-links">
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php" class="active">MENU</a></li>
-                <li><a href="../order/status.php">ORDERS</a></li>
+                <li><a href="/User/status.php">ORDERS</a></li>
                 <li><a href="favorites.php">FAVORITES</a></li>
             </ul>
         </div>
@@ -151,7 +107,6 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                 <i class="fa-solid fa-magnifying-glass" id="searchIconBtn" onclick="toggleSearch()"></i>
                 <input type="text" placeholder="Search coffee and more">
             </div>
-
             <a href="cart.php" class="cart-link">
                 <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i>
             </a>
@@ -250,20 +205,19 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
         </section>
 
         <footer>
-
             <div class="footer-content">
                 <div class="footer-logo">
-                    <img src="/picture/icon2.png" alt="BoyCold logo">
+                    <img src="../picture/icon2.png" alt="BoyCold logo">
                     <h1>BOYCOLD CAFE</h1>
-                    <p>© 2026 BoyCold Cafe. All rights reserved.</p>
+                    <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
                 </div>
                 <div class="footer-links">
                     <ul>
-                        <li><a href="#">Contact Information</a></li>
-                        <li><a href="#">Customer Links</a></li>
-                        <li><a href="#">Company Information</a></li>
-                        <li><a href="#">Legal Links</a></li>
-                        <li><a href="#">Social Media Links</a></li>
+                        <li><a href="../footer-link/about.php">About Us</a></li>
+                        <li><a href="../footer-link/compinfo.php">Company Information</a></li>
+                        <li><a href="../footer-link/faqs.php">FAQs</a></li>
+                        <li><a href="../footer-link/privacy.php">Privacy and Safety</a></li>
+                        <li><a href="../footer-link/terms.php">Terms and Conditions</a></li>
                     </ul>
                 </div>
             </div>
@@ -281,4 +235,5 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             <span id="cartToastMsg">Added to cart!</span>
         </div>
 </body>
+
 </html>
