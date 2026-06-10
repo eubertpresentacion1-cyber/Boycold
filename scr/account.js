@@ -141,11 +141,9 @@ function closeAvatarModal() {
     document.getElementById('avatarModal').style.display = 'none';
 }
 function triggerCamera() {
-    closeAvatarModal();
     document.getElementById('avatarCameraInput').click();
 }
 function triggerFilePicker() {
-    closeAvatarModal();
     document.getElementById('avatarFileInput').click();
 }
 const avatarModal = document.getElementById('avatarModal');
@@ -212,8 +210,8 @@ async function handleAvatarFile(file) {
 
 const avatarFileInput   = document.getElementById('avatarFileInput');
 const avatarCameraInput = document.getElementById('avatarCameraInput');
-if (avatarFileInput)   avatarFileInput.addEventListener('change',   function () { handleAvatarFile(this.files[0]); });
-if (avatarCameraInput) avatarCameraInput.addEventListener('change', function () { handleAvatarFile(this.files[0]); });
+if (avatarFileInput)   avatarFileInput.addEventListener('change',   function () { closeAvatarModal(); handleAvatarFile(this.files[0]); });
+if (avatarCameraInput) avatarCameraInput.addEventListener('change', function () { closeAvatarModal(); handleAvatarFile(this.files[0]); });
 
 // ── Avatar hover overlay ───────────────────────────────────
 const avatarWrap    = document.getElementById('profileAvatarWrap');
