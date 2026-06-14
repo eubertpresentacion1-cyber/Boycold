@@ -125,7 +125,7 @@ switch ($action) {
                 subtotal, delivery_fee, tax, total, address, notes)
              VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt->bind_param("isssdddss",
+        $stmt->bind_param("isssddddss",
             $userId, $orderType, $paymentMethod, $paymentStatus,
             $subtotal, $deliveryFee, $tax, $total, $address, $orderNotes
         );
