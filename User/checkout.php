@@ -470,7 +470,7 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 
                 const result = await res.json();
                 if (result.success) {
-                    window.location.href = '../order/status.php?order_id=' + result.order_id;
+                    window.location.href = 'status.php?order_id=' + result.order_id;
                 } else {
                     alert('Error placing order: ' + (result.error || 'Unknown error'));
                     this.disabled = false;
