@@ -162,7 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Re-use the existing mailer helper (type = 'email_change' will render as generic OTP)
-            sendOTPEmail($newEmail, $fullName, $otp, 'email_change');
+            if (!sendOTPEmail($newEmail, $fullName, $otp, 'email_change')) {
+                throw new Exception('Failed to send OTP email. Please check mail configuration.');
+            }
 
             // Store the intended new email in session so the verify step knows what to update to
             $_SESSION['pending_email_change'] = $newEmail;
