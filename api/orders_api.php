@@ -12,6 +12,13 @@
 //   cancel  → cancel a pending order (user's own only)
 //   update_status → admin-only: change order status
 //
+// COD FLOW:
+//   Order placed (status=pending, payment_status=unpaid for COD,
+//                  payment_status=paid for GCash)
+//     → Admin prepares order (status=preparing)
+//     → Admin delivers (status=delivered)
+//     → Admin marks completed (status=completed)
+//         → if payment_method = 'cod', payment_status auto-set to 'paid'
 // ─────────────────────────────────────────────────────────────
 session_start();
 require_once '../config/db_config.php';
@@ -44,18 +51,28 @@ switch ($action) {
     //       "orderType": "dine-in", "notes": "" }
     //   ],
     //   "order_type": "dine-in",
+    //   "payment_method": "cod" | "gcash",
     //   "address": "...",
     //   "delivery_fee": 30,
     //   "tax": 5,
     //   "notes": ""
     // }
     case 'place':
-        $items      = $body['items']       ?? [];
-        $orderType  = substr(trim($body['order_type'] ?? 'dine-in'), 0, 20);
-        $address    = trim($body['address']  ?? '');
+        $items       = $body['items']       ?? [];
+        $orderType   = substr(trim($body['order_type'] ?? 'dine-in'), 0, 20);
+        $address     = trim($body['address']  ?? '');
         $deliveryFee = (float) ($body['delivery_fee'] ?? 0);
         $tax         = (float) ($body['tax']          ?? 0);
         $orderNotes  = trim($body['notes']   ?? '');
+
+        // ── Payment method / status ────────────────────────────
+        $paymentMethod = trim($body['payment_method'] ?? 'cod');
+        if (!in_array($paymentMethod, ['cod', 'gcash'], true)) {
+            $paymentMethod = 'cod';
+        }
+        // GCash is paid through the app at checkout time; COD is
+        // settled later when the order is delivered (see update_status).
+        $paymentStatus = ($paymentMethod === 'gcash') ? 'paid' : 'unpaid';
 
         if (empty($items)) {
             echo json_encode(['success' => false, 'error' => 'No items in order.']);
@@ -73,11 +90,13 @@ switch ($action) {
         // user_id comes from SESSION — never from the request body
         $stmt = $connect->prepare(
             "INSERT INTO orders
-               (user_id, status, order_type, subtotal, delivery_fee, tax, total, address, notes)
-             VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?)"
+               (user_id, status, order_type, payment_method, payment_status,
+                subtotal, delivery_fee, tax, total, address, notes)
+             VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt->bind_param("issdddss",
-            $userId, $orderType, $subtotal, $deliveryFee, $tax, $total, $address, $orderNotes
+        $stmt->bind_param("isssdddss",
+            $userId, $orderType, $paymentMethod, $paymentStatus,
+            $subtotal, $deliveryFee, $tax, $total, $address, $orderNotes
         );
         if (!$stmt->execute()) {
             echo json_encode(['success' => false, 'error' => 'Failed to create order.']);
@@ -116,10 +135,12 @@ switch ($action) {
         $clr->execute();
 
         echo json_encode([
-            'success'  => true,
-            'order_id' => $orderId,
-            'total'    => number_format($total, 2),
-            'message'  => 'Order placed successfully.',
+            'success'        => true,
+            'order_id'       => $orderId,
+            'total'          => number_format($total, 2),
+            'payment_method' => $paymentMethod,
+            'payment_status' => $paymentStatus,
+            'message'        => 'Order placed successfully.',
         ]);
         break;
 
@@ -132,6 +153,7 @@ switch ($action) {
         if ($isAdmin && !empty($body['all'])) {
             // Admin: all orders
             $sql = "SELECT o.id, o.user_id, o.status, o.order_type,
+                           o.payment_method, o.payment_status,
                            o.subtotal, o.delivery_fee, o.tax, o.total,
                            o.created_at,
                            u.firstname, u.lastname, u.email
@@ -152,6 +174,7 @@ switch ($action) {
         } else {
             // Regular user: only their own
             $sql = "SELECT o.id, o.user_id, o.status, o.order_type,
+                           o.payment_method, o.payment_status,
                            o.subtotal, o.delivery_fee, o.tax, o.total,
                            o.created_at
                     FROM   orders o
@@ -243,7 +266,11 @@ switch ($action) {
         echo json_encode(['success' => true, 'message' => 'Order cancelled.']);
         break;
 
-    // ── UPDATE STATUS (admin only) ────────────────────────────
+    // COD FLOW:
+    //   pending → preparing → delivered → completed
+    //   When status is set to 'completed' AND payment_method = 'cod',
+    //   payment_status is automatically flipped to 'paid'.
+    //   GCash orders are already payment_status = 'paid' from checkout.
     case 'update_status':
         if (!$isAdmin) {
             http_response_code(403);
@@ -253,14 +280,24 @@ switch ($action) {
 
         $orderId   = isset($body['order_id']) ? (int) $body['order_id'] : 0;
         $newStatus = trim($body['status'] ?? '');
-        $allowed   = ['pending','confirmed','preparing','ready','delivered','cancelled'];
+        $allowed   = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'completed', 'cancelled'];
 
         if ($orderId <= 0 || !in_array($newStatus, $allowed, true)) {
             echo json_encode(['success' => false, 'error' => 'Invalid order_id or status.']);
             break;
         }
 
-        $stmt = $connect->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        if ($newStatus === 'completed') {
+            // Auto-settle COD orders on completion; leave GCash (already paid) untouched
+            $stmt = $connect->prepare(
+                "UPDATE orders
+                 SET status = ?,
+                     payment_status = IF(payment_method = 'cod', 'paid', payment_status)
+                 WHERE id = ?"
+            );
+        } else {
+            $stmt = $connect->prepare("UPDATE orders SET status = ? WHERE id = ?");
+        }
         $stmt->bind_param("si", $newStatus, $orderId);
         $stmt->execute();
 

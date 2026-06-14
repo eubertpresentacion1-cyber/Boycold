@@ -312,17 +312,18 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
     </main>
 
     <!-- FOOTER -->
-    <footer>
-        <div>© 2026 BoyCold Cafe. All rights reserved.</div>
+   <footer>
+        <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
         <div class="footer-links">
-            <a href="#">About Us</a>
-            <a href="#">Terms & Conditions</a>
-            <a href="#">Privacy</a>
+            <a href="/footer-link/about.php">About Us</a>
+            <a href="/footer-link/terms.php">Terms & Conditions</a>
+            <a href="/footer-link/privacy.php">Privacy</a>
         </div>
         <div class="footer-logo">
             BOYCOLD CAFE
         </div>
     </footer>
+
 
     <script>
         /* ── Product Data from PHP ── */

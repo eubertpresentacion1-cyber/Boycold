@@ -53,8 +53,8 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 <li class="sidebar-nav-only"><a href="home.php">HOME</a></li>
                 <li class="sidebar-nav-only"><a href="menu.php">MENU</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
-                <li class="sidebar-nav-only"><a href="../order/status.php">ORDERS</a></li>
-                <li class="sidebar-nav-only"><a href="stores.php">FIND A STORE</a></li>
+                <li class="sidebar-nav-only"><a href="status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only"><a href="../store/stores.php">FIND A STORE</a></li>
             </ul>
         </nav>
         <div class="sidebar-user">
@@ -87,7 +87,7 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
                 <li><a href="favorites.php">FAVORITES</a></li>
-                <li><a href="../order/status.php">ORDERS</a></li>
+                <li><a href="status.php">ORDERS</a></li>
             </ul>
         </div>
         <div class="logo">
@@ -217,12 +217,9 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                             </div>
                             <div class="co-pay-circle"></div>
                         </label>
-
                     </div>
                 </div>
-
             </div>
-
         </div>
 
         <!-- RIGHT SIDE -->
@@ -278,11 +275,11 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
 </main>
 
     <footer>
-        <div>© 2026 BoyCold Cafe. All rights reserved.</div>
+        <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
         <div class="footer-links">
-            <a href="#">About Us</a>
-            <a href="#">Terms & Conditions</a>
-            <a href="#">Privacy</a>
+            <a href="/footer-link/about.php">About Us</a>
+            <a href="/footer-link/terms.php">Terms & Conditions</a>
+            <a href="/footer-link/privacy.php">Privacy</a>
         </div>
         <div class="footer-logo">
             BOYCOLD CAFE

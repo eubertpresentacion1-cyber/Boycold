@@ -90,32 +90,6 @@ $_SESSION['user_email'] = $user['email'];
                 <li><a href="/User/favorites.php">FAVORITES</a></li>
             </ul>
         </div>
-
-        <!-- CENTER: logo -->
-        <div class="logo">
-            <img src="../picture/Boycold Logo 2.png" alt="BoyCold">
-        </div>
-        <div class="nav-right-group">
-            <a href="/User/cart.php" class="cart-link">
-                <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i>
-            </a>
-            <div class="avatar-dropdown-wrap">
-                <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
-                    <?php if ($avatar): ?>
-                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;">
-                        <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
-                    <?php else: ?>
-                        <img id="navAvatarImg" src="" alt="avatar" style="display:none;">
-                        <i class="fa-solid fa-user" id="navAvatarIcon"></i>
-                    <?php endif; ?>
-                </div>
-                <div class="avatar-dropdown" id="avatarDropdown">
-                    <a href="../User/account.php"><i class="fa-solid fa-user"></i> Account</a>
-                    <hr>
-                    <a href="../logout.php" class="dropdown-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
-                </div>
-            </div>
-        </div>
     </nav>
 
     <!-- MAIN CONTENT -->

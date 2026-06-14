@@ -289,9 +289,13 @@ function collapseSettings() {
     card.classList.remove('expanded');
     setTimeout(() => {
         expandedView.style.display = '';
+        expandedView.classList.remove('panel-open');
         document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('s-active'));
         document.getElementById('s-panel-welcome').classList.add('s-active');
         document.querySelectorAll('.s-item').forEach(i => i.classList.remove('s-active'));
+        // Hide mobile back button
+        const backBtn = document.getElementById('s-mobile-back');
+        if (backBtn) backBtn.style.display = 'none';
     }, 420);
 }
 function showSPanel(name, el) {
@@ -299,6 +303,25 @@ function showSPanel(name, el) {
     document.querySelectorAll('.s-item').forEach(i => i.classList.remove('s-active'));
     document.getElementById('s-panel-' + name).classList.add('s-active');
     el.classList.add('s-active');
+
+    // Mobile: switch to panel view (back-nav pattern)
+    const expandedView = document.querySelector('.card-expanded-view');
+    if (expandedView && window.innerWidth <= 768) {
+        expandedView.classList.add('panel-open');
+        const backBtn = document.getElementById('s-mobile-back');
+        if (backBtn) backBtn.style.display = 'flex';
+    }
+}
+
+function closeMobilePanel() {
+    const expandedView = document.querySelector('.card-expanded-view');
+    if (expandedView) expandedView.classList.remove('panel-open');
+    document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('s-active'));
+    document.querySelectorAll('.s-item').forEach(i => i.classList.remove('s-active'));
+    const backBtn = document.getElementById('s-mobile-back');
+    if (backBtn) backBtn.style.display = 'none';
+    const welcome = document.getElementById('s-panel-welcome');
+    if (welcome) welcome.classList.add('s-active');
 }
 function showMsg(panelKey, text, isError) {
     const el = document.getElementById('msg-' + panelKey);
@@ -308,3 +331,315 @@ function showMsg(panelKey, text, isError) {
     el.style.marginTop = '8px';
     el.style.fontSize = '0.85rem';
 }
+
+// ── Save password ──────────────────────────────────────────
+async function savePassword() {
+    const current  = document.getElementById('inp-current-password').value;
+    const newPw    = document.getElementById('inp-new-password').value;
+    const confirm  = document.getElementById('inp-confirm-password').value;
+    const msgEl    = document.getElementById('msg-password');
+
+    msgEl.textContent = '';
+
+    if (!current || !newPw || !confirm) {
+        msgEl.textContent = 'All password fields are required.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+    if (newPw !== confirm) {
+        msgEl.textContent = 'Passwords do not match.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+    if (
+        newPw.length < 8 || newPw.length > 25 ||
+        !/[A-Z]/.test(newPw) ||
+        !/[a-z]/.test(newPw) ||
+        !/[0-9]/.test(newPw)
+    ) {
+        msgEl.textContent = 'Password does not meet the requirements.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('field',            'password');
+    fd.append('current_password', current);
+    fd.append('new_password',     newPw);
+    fd.append('confirm_password', confirm);
+
+    try {
+        const res  = await fetch('account.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            msgEl.textContent = data.message || 'Password changed successfully!';
+            msgEl.style.color = '#27ae60';
+            document.getElementById('inp-current-password').value = '';
+            document.getElementById('inp-new-password').value     = '';
+            document.getElementById('inp-confirm-password').value = '';
+            // Hide rules panel after success
+            const rulesPanel = document.getElementById('password-rules-panel');
+            if (rulesPanel) rulesPanel.style.display = 'none';
+        } else {
+            msgEl.textContent = data.error || 'Failed to update password.';
+            msgEl.style.color = '#c0392b';
+        }
+    } catch (err) {
+        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.style.color = '#c0392b';
+    }
+}
+
+// ── Save email (two-step OTP flow) ─────────────────────────
+async function saveEmail() {
+    const newEmail = document.getElementById('inp-new-email').value.trim();
+    const msgEl    = document.getElementById('msg-email');
+
+    msgEl.textContent = '';
+
+    if (!newEmail) {
+        msgEl.textContent = 'Email cannot be empty.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+
+    const btn = document.querySelector('#s-panel-email .s-save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+    const fd = new FormData();
+    fd.append('field',     'email_send_otp');
+    fd.append('new_email', newEmail);
+
+    try {
+        const res  = await fetch('account.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            msgEl.textContent = data.message;
+            msgEl.style.color = '#27ae60';
+            // Show OTP verification step
+            showEmailOtpStep(newEmail);
+        } else {
+            msgEl.textContent = data.error || 'Failed to send OTP.';
+            msgEl.style.color = '#c0392b';
+        }
+    } catch (err) {
+        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.style.color = '#c0392b';
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Send OTP'; }
+    }
+}
+
+function showEmailOtpStep(newEmail) {
+    const panel = document.getElementById('s-panel-email');
+    if (!panel) return;
+
+    // Prevent duplicate injection
+    if (panel.querySelector('#email-otp-step')) return;
+
+    const step = document.createElement('div');
+    step.id = 'email-otp-step';
+    step.style.cssText = 'margin-top:16px;';
+    step.innerHTML = `
+        <p style="font-size:.85rem;color:#555;margin-bottom:10px;">
+            Enter the 6-digit code sent to <strong>${newEmail}</strong>
+        </p>
+        <div style="display:flex;gap:6px;margin-bottom:10px;" id="email-otp-digits">
+            ${[1,2,3,4,5,6].map(i =>
+                `<input type="text" maxlength="1" inputmode="numeric"
+                    id="email-otp-d${i}"
+                    style="width:38px;height:42px;text-align:center;font-size:1.1rem;
+                           border:1.5px solid #ccc;border-radius:8px;outline:none;">`
+            ).join('')}
+        </div>
+        <div id="msg-email-otp" style="font-size:.85rem;min-height:18px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:10px;align-items:center;">
+            <button id="btn-verify-email-otp" class="s-save-btn"
+                onclick="verifyEmailOtp()" style="margin:0;">Verify & Save</button>
+            <span id="email-otp-resend-wrap" style="font-size:.85rem;">
+                <span id="email-otp-resend-link" class="resend-link"
+                    style="color:#6F4E37;cursor:pointer;text-decoration:underline;"
+                    onclick="resendEmailOtp()">Resend OTP</span>
+                <span id="email-otp-countdown" style="display:none;color:#6F4E37;font-size:.85rem;"></span>
+            </span>
+        </div>
+    `;
+
+    // Insert before the existing msg-email div
+    const msgEl = document.getElementById('msg-email');
+    panel.insertBefore(step, msgEl);
+
+    // Wire up auto-focus/auto-advance on the 6 digit inputs
+    const digits = step.querySelectorAll('input[type="text"]');
+    digits.forEach((inp, i) => {
+        inp.addEventListener('input', () => {
+            inp.value = inp.value.replace(/\D/g, '');
+            if (inp.value && i < digits.length - 1) digits[i + 1].focus();
+        });
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !inp.value && i > 0) digits[i - 1].focus();
+        });
+        inp.addEventListener('paste', e => {
+            e.preventDefault();
+            const p = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+            [...p].forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
+            // Focus last filled digit
+            const last = Math.min(p.length, digits.length) - 1;
+            if (last >= 0) digits[last].focus();
+        });
+    });
+
+    // Start 60s countdown so user knows when they can resend
+    startEmailOtpCountdown();
+
+    digits[0].focus();
+}
+
+function startEmailOtpCountdown() {
+    const link      = document.getElementById('email-otp-resend-link');
+    const countdown = document.getElementById('email-otp-countdown');
+    if (!link || !countdown) return;
+
+    let remaining = 60;
+    link.style.display = 'none';
+    countdown.style.display = 'inline';
+    countdown.textContent   = `Resend in ${remaining}s`;
+
+    const timer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(timer);
+            countdown.style.display = 'none';
+            link.style.display      = 'inline';
+        } else {
+            countdown.textContent = `Resend in ${remaining}s`;
+        }
+    }, 1000);
+}
+
+async function resendEmailOtp() {
+    const newEmailInput = document.getElementById('inp-new-email');
+    const newEmail      = newEmailInput ? newEmailInput.value.trim() : '';
+    const msgEl         = document.getElementById('msg-email-otp');
+
+    if (!newEmail) return;
+
+    const fd = new FormData();
+    fd.append('field',     'email_send_otp');
+    fd.append('new_email', newEmail);
+
+    try {
+        const res  = await fetch('account.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            if (msgEl) { msgEl.textContent = 'New OTP sent!'; msgEl.style.color = '#27ae60'; }
+            startEmailOtpCountdown();
+        } else {
+            if (msgEl) { msgEl.textContent = data.error || 'Could not resend.'; msgEl.style.color = '#c0392b'; }
+        }
+    } catch (err) {
+        if (msgEl) { msgEl.textContent = 'Network error.'; msgEl.style.color = '#c0392b'; }
+    }
+}
+
+async function verifyEmailOtp() {
+    const digits = document.querySelectorAll('#email-otp-digits input');
+    let otp = '';
+    digits.forEach(d => otp += d.value);
+
+    const msgEl = document.getElementById('msg-email-otp');
+    msgEl.textContent = '';
+
+    if (otp.length !== 6) {
+        msgEl.textContent = 'Please enter all 6 digits.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+
+    const btn = document.getElementById('btn-verify-email-otp');
+    if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+
+    const fd = new FormData();
+    fd.append('field', 'email_verify_otp');
+    fd.append('otp',   otp);
+
+    try {
+        const res  = await fetch('account.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+            // Update every place the email is displayed on the page
+            const newEmail = data.new_email;
+            document.querySelectorAll('.sidebar-user-email, [data-field="email"]').forEach(el => el.textContent = newEmail);
+
+            // Show success in the main panel message area
+            const panelMsg = document.getElementById('msg-email');
+            if (panelMsg) { panelMsg.textContent = data.message || 'Email updated successfully!'; panelMsg.style.color = '#27ae60'; }
+
+            // Remove the OTP step
+            const step = document.getElementById('email-otp-step');
+            if (step) step.remove();
+
+            // Clear the email input
+            const inp = document.getElementById('inp-new-email');
+            if (inp) inp.value = '';
+
+            // Reset the Send OTP button label
+            const sendBtn = document.querySelector('#s-panel-email .s-save-btn');
+            if (sendBtn) sendBtn.textContent = 'Send OTP';
+        } else {
+            msgEl.textContent = data.error || 'Verification failed.';
+            msgEl.style.color = '#c0392b';
+            if (btn) { btn.disabled = false; btn.textContent = 'Verify & Save'; }
+        }
+    } catch (err) {
+        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.style.color = '#c0392b';
+        if (btn) { btn.disabled = false; btn.textContent = 'Verify & Save'; }
+    }
+}
+
+// ── Password eye toggle ────────────────────────────────────
+document.addEventListener('click', function (e) {
+    const eye = e.target.closest('.password-eye');
+    if (!eye) return;
+    const inputId = eye.getAttribute('data-input');
+    const input   = document.getElementById(inputId);
+    if (!input) return;
+    const isVisible = input.type === 'text';
+    input.type      = isVisible ? 'password' : 'text';
+    eye.src         = isVisible ? '../picture/eye-close.png' : '../picture/eye-open.png';
+});
+
+// ── Live password rules validation ────────────────────────
+(function () {
+    const newPwInput = document.getElementById('inp-new-password');
+    if (!newPwInput) return;
+
+    const rulesPanel  = document.getElementById('password-rules-panel');
+    const rLength     = document.getElementById('s-length');
+    const rUppercase  = document.getElementById('s-uppercase');
+    const rLowercase  = document.getElementById('s-lowercase');
+    const rNumber     = document.getElementById('s-number');
+
+    function setRule(el, valid) {
+        if (!el) return;
+        el.className = valid ? 'valid' : 'invalid';
+        el.textContent = (valid ? '✔' : '✘') + el.textContent.slice(1);
+    }
+
+    newPwInput.addEventListener('focus', function () {
+        if (rulesPanel) rulesPanel.style.display = 'block';
+    });
+
+    newPwInput.addEventListener('input', function () {
+        const v = this.value;
+        setRule(rLength,    v.length >= 8 && v.length <= 25);
+        setRule(rUppercase, /[A-Z]/.test(v));
+        setRule(rLowercase, /[a-z]/.test(v));
+        setRule(rNumber,    /[0-9]/.test(v));
+    });
+
+    newPwInput.addEventListener('blur', function () {
+        if (this.value === '' && rulesPanel) rulesPanel.style.display = 'none';
+    });
+})();

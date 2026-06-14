@@ -455,7 +455,6 @@ $_SESSION['user_email'] = $user['email'];
                     if (navImg) navImg.src = newSrc;
                     if (navIcon) navIcon.style.display = 'none';
                     avatarMsg.style.color = '#27ae60';
-                    // Show the success message from the server (database update confirmation)
                     avatarMsg.textContent = data.message || 'Photo updated!';
                     setTimeout(() => {
                         avatarMsg.textContent = '';

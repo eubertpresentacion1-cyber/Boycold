@@ -61,4 +61,75 @@ password.addEventListener("keyup", function () {
 
 });
 
+/* ── Terms & Conditions Overlay Logic ── */
+const overlay = document.getElementById('tcOverlay');
+const tcBody = document.getElementById('tcBody');
+const tcAcceptCheck = document.getElementById('tcAcceptCheck');
+const tcConfirmBtn = document.getElementById('tcConfirmBtn');
+const tcScrollHint = document.getElementById('tcScrollHint');
+const registerForm = document.getElementById('registerForm');
+const hiddenCheckbox = document.getElementById('Remember');
+const registerBtn = document.getElementById('registerBtn');
 
+// ── Open overlay (after basic HTML5 validation passes) ──
+function openOverlay() {
+    // Trigger native validation first
+    if (!registerForm.checkValidity()) {
+        registerForm.reportValidity();
+        return;
+    }
+    // Reset overlay state each time it opens
+    tcAcceptCheck.checked = false;
+    tcConfirmBtn.disabled = true;
+    tcConfirmBtn.classList.remove('enabled');
+    tcScrollHint.style.display = '';
+    tcBody.scrollTop = 0;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeOverlay() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Register button → open overlay instead of submitting
+registerBtn.addEventListener('click', openOverlay);
+
+// Links inside form also open the overlay
+document.getElementById('openTcLink').addEventListener('click', function (e) { e.preventDefault(); openOverlay(); });
+document.getElementById('openTcLink2').addEventListener('click', function (e) { e.preventDefault(); openOverlay(); });
+
+// Close buttons
+document.getElementById('tcCloseBtn').addEventListener('click', closeOverlay);
+document.getElementById('tcCancelBtn').addEventListener('click', closeOverlay);
+
+// Click outside modal to close
+overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeOverlay();
+});
+
+// Escape key to close
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) closeOverlay();
+});
+
+// Enable confirm button only when checkbox is ticked
+tcAcceptCheck.addEventListener('change', function () {
+    tcConfirmBtn.disabled = !this.checked;
+    tcConfirmBtn.classList.toggle('enabled', this.checked);
+});
+
+// Hide scroll hint when user scrolls to bottom of T&C
+tcBody.addEventListener('scroll', function () {
+    const atBottom = tcBody.scrollTop + tcBody.clientHeight >= tcBody.scrollHeight - 10;
+    if (atBottom) tcScrollHint.style.display = 'none';
+});
+
+// Confirm → check hidden checkbox, then submit form
+tcConfirmBtn.addEventListener('click', function () {
+    if (!tcAcceptCheck.checked) return;
+    hiddenCheckbox.checked = true;   // satisfy PHP `required` on the hidden field
+    closeOverlay();
+    registerForm.submit();           // actual POST
+});

@@ -54,6 +54,203 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_address'] = $value;
         echo json_encode(['success' => true, 'value' => htmlspecialchars($value)]);
         exit;
+    } elseif ($field === 'password') {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword     = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        // Validate current password
+        $stmt = $connect->prepare("SELECT password FROM users WHERE id=?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        if (!$result || !password_verify($currentPassword, $result['password'])) {
+            echo json_encode(['success' => false, 'error' => 'Current password is incorrect.']);
+            exit;
+        }
+
+        // Validate new password
+        if (!$newPassword || !$confirmPassword) {
+            echo json_encode(['success' => false, 'error' => 'Both password fields are required.']);
+            exit;
+        }
+        if ($newPassword !== $confirmPassword) {
+            echo json_encode(['success' => false, 'error' => 'Passwords do not match.']);
+            exit;
+        }
+        if (
+            strlen($newPassword) < 8 || strlen($newPassword) > 25
+            || !preg_match('/[A-Z]/', $newPassword)
+            || !preg_match('/[a-z]/', $newPassword)
+            || !preg_match('/[0-9]/', $newPassword)
+        ) {
+            echo json_encode(['success' => false, 'error' => 'Password does not meet the requirements.']);
+            exit;
+        }
+
+        // Update password
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+        $upd = $connect->prepare("UPDATE users SET password=? WHERE id=?");
+        $upd->bind_param("si", $hashed, $userId);
+        if ($upd->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Password changed successfully!']);
+            exit;
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Failed to update password.']);
+            exit;
+        }
+    } elseif ($field === 'email_send_otp') {
+        // ── Step 1: validate new email and send OTP ──────────────────
+        try {
+            require_once '../config/mailer.php';
+            $newEmail = trim($_POST['new_email'] ?? '');
+
+            if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['success' => false, 'error' => 'Invalid email format.']);
+                exit;
+            }
+
+            // Check if email already taken by another user
+            $checkStmt = $connect->prepare("SELECT id FROM users WHERE email=? AND id!=?");
+            $checkStmt->bind_param("si", $newEmail, $userId);
+            $checkStmt->execute();
+            if ($checkStmt->get_result()->num_rows > 0) {
+                echo json_encode(['success' => false, 'error' => 'Email taken, use a different email.']);
+                exit;
+            }
+
+            // Cooldown: prevent spamming OTP to the same new email within 60s
+            $chk = $connect->prepare(
+                "SELECT otp_send FROM otp WHERE email=? AND type='email_change' AND status='pending'
+                 AND otp_send >= NOW() - INTERVAL 60 SECOND ORDER BY id DESC LIMIT 1"
+            );
+            $chk->bind_param("s", $newEmail);
+            $chk->execute();
+            $lastRow = $chk->get_result()->fetch_assoc();
+            if ($lastRow) {
+                $wait = max(0, 60 - (time() - strtotime($lastRow['otp_send'])));
+                echo json_encode(['success' => false, 'error' => "Please wait {$wait}s before requesting another OTP."]);
+                exit;
+            }
+
+            // Expire any previous pending OTPs for this new email + type
+            $exp = $connect->prepare("UPDATE otp SET status='expired' WHERE email=? AND type='email_change' AND status='pending'");
+            $exp->bind_param("s", $newEmail);
+            $exp->execute();
+
+            // Get current user's name for the email body
+            $nq = $connect->prepare("SELECT firstname, lastname FROM users WHERE id=?");
+            $nq->bind_param("i", $userId);
+            $nq->execute();
+            $nr       = $nq->get_result()->fetch_assoc();
+            $fullName = $nr ? $nr['firstname'] . ' ' . $nr['lastname'] : $newEmail;
+
+            // Generate OTP
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $ip  = $_SERVER['REMOTE_ADDR'];
+
+            $ins = $connect->prepare(
+                "INSERT INTO otp (email, otp, type, status, otp_send, ip, expires_at)
+                 VALUES (?, ?, 'email_change', 'pending', NOW(), ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))"
+            );
+            if ($ins === false) {
+                throw new Exception('Prepare failed for otp insert: ' . $connect->error);
+            }
+            $ins->bind_param("sss", $newEmail, $otp, $ip);
+            if (!$ins->execute()) {
+                throw new Exception('Insert failed for otp: ' . $ins->error);
+            }
+
+            // Re-use the existing mailer helper (type = 'email_change' will render as generic OTP)
+            sendOTPEmail($newEmail, $fullName, $otp, 'email_change');
+
+            // Store the intended new email in session so the verify step knows what to update to
+            $_SESSION['pending_email_change'] = $newEmail;
+
+            echo json_encode(['success' => true, 'message' => "A 6-digit OTP has been sent to {$newEmail}."]);
+            exit;
+        } catch (\Throwable $e) {
+            error_log('email_send_otp error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Could not send OTP. Please try again later.']);
+            exit;
+        }
+
+    } elseif ($field === 'email_verify_otp') {
+        // ── Step 2: verify OTP and commit the email change ───────────
+        try {
+            $otp      = trim($_POST['otp'] ?? '');
+            $newEmail = $_SESSION['pending_email_change'] ?? '';
+
+            if (!$newEmail) {
+                echo json_encode(['success' => false, 'error' => 'Session expired. Please start over.']);
+                exit;
+            }
+            if (!preg_match('/^\d{6}$/', $otp)) {
+                echo json_encode(['success' => false, 'error' => 'Please enter a valid 6-digit OTP.']);
+                exit;
+            }
+
+            $stmt = $connect->prepare(
+                "SELECT id, otp, expires_at, attempts FROM otp
+                 WHERE email=? AND type='email_change' AND status='pending'
+                 ORDER BY id DESC LIMIT 1"
+            );
+            $stmt->bind_param("s", $newEmail);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+
+            if (!$row) {
+                echo json_encode(['success' => false, 'error' => 'No active OTP found. Please request a new one.']);
+                exit;
+            }
+            if (new DateTime() > new DateTime($row['expires_at'])) {
+                $u = $connect->prepare("UPDATE otp SET status='expired' WHERE id=?");
+                $u->bind_param("i", $row['id']); $u->execute();
+                echo json_encode(['success' => false, 'error' => 'OTP has expired. Please request a new one.']);
+                exit;
+            }
+            if ($row['attempts'] >= 5) {
+                echo json_encode(['success' => false, 'error' => 'Too many failed attempts. Please request a new OTP.']);
+                exit;
+            }
+            if ($otp !== $row['otp']) {
+                $u = $connect->prepare("UPDATE otp SET attempts=attempts+1 WHERE id=?");
+                $u->bind_param("i", $row['id']); $u->execute();
+                $left = 5 - ($row['attempts'] + 1);
+                echo json_encode(['success' => false, 'error' => "Incorrect OTP. {$left} attempt(s) remaining."]);
+                exit;
+            }
+
+            // OTP correct — mark verified
+            $u = $connect->prepare("UPDATE otp SET status='verified' WHERE id=?");
+            $u->bind_param("i", $row['id']); $u->execute();
+
+            // Double-check the new email isn't taken (race condition guard)
+            $chk2 = $connect->prepare("SELECT id FROM users WHERE email=? AND id!=?");
+            $chk2->bind_param("si", $newEmail, $userId);
+            $chk2->execute();
+            if ($chk2->get_result()->num_rows > 0) {
+                echo json_encode(['success' => false, 'error' => 'Email was taken by another account. Please choose a different email.']);
+                exit;
+            }
+
+            // Commit the email change
+            $upd = $connect->prepare("UPDATE users SET email=? WHERE id=?");
+            $upd->bind_param("si", $newEmail, $userId);
+            if ($upd->execute()) {
+                $_SESSION['user_email'] = $newEmail;
+                unset($_SESSION['pending_email_change']);
+                echo json_encode(['success' => true, 'new_email' => htmlspecialchars($newEmail), 'message' => 'Email updated successfully!']);
+                exit;
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to update email.']);
+                exit;
+            }
+        } catch (\Throwable $e) {
+            error_log('email_verify_otp error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Could not verify OTP. Please try again later.']);
+            exit;
+        }
     }
 
     echo json_encode(['success' => false, 'error' => 'Unknown field.']);
@@ -372,6 +569,10 @@ $_SESSION['user_email'] = $user['email'];
                     </div>
 
                     <div class="s-right">
+                        <!-- Mobile back button (hidden on desktop via CSS) -->
+                        <button class="s-back-btn" id="s-mobile-back" onclick="closeMobilePanel()" style="display:none;">
+                            <i class="fa-solid fa-chevron-left"></i> Settings
+                        </button>
                         <button class="s-close-btn" onclick="collapseSettings()" aria-label="Close">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
@@ -396,17 +597,39 @@ $_SESSION['user_email'] = $user['email'];
                         <div class="s-panel" id="s-panel-password">
                             <h2>Change Password</h2>
                             <p>Keep your account secure with a strong password.</p>
-                            <div class="s-fg"><label>Current Password</label><input type="password" placeholder="Current password" /></div>
-                            <div class="s-fg"><label>New Password</label><input type="password" placeholder="New password" /></div>
-                            <div class="s-fg"><label>Confirm Password</label><input type="password" placeholder="Confirm new password" /></div>
-                            <button class="s-save-btn">Save Changes</button>
+                            <div class="s-fg"><label>Current Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="inp-current-password" placeholder="Current password" style="width:100%;padding-right:40px;" />
+                                    <img src="../picture/eye-close.png" alt="Toggle" class="password-eye" data-input="inp-current-password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;width:15px;height:15px;">
+                                </div>
+                            </div>
+                            <div class="s-fg"><label>New Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="inp-new-password" placeholder="New password" style="width:100%;padding-right:40px;" />
+                                    <img src="../picture/eye-close.png" alt="Toggle" class="password-eye" data-input="inp-new-password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;width:15px;height:15px;">
+                                </div>
+                            </div>
+                            <div class="s-fg"><label>Confirm Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="inp-confirm-password" placeholder="Confirm new password" style="width:100%;padding-right:40px;" />
+                                    <img src="../picture/eye-close.png" alt="Toggle" class="password-eye" data-input="inp-confirm-password" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;width:15px;height:15px;">
+                                </div>
+                            </div>
+                            <div class="password-rules" id="password-rules-panel" style="font-size:0.85rem;margin:12px 0;display:none;">
+                                <p id="s-length" class="invalid" style="margin:4px 0;">✘ 8–25 characters</p15                                <p id="s-uppercase" class="invalid" style="margin:4px 0;">✘ At least 1 uppercase letter</p>
+                                <p id="s-lowercase" class="invalid" style="margin:4px 0;">✘ At least 1 lowercase letter</p>
+                                <p id="s-number" class="invalid" style="margin:4px 0;">✘ At least 1 number</p>
+                            </div>
+                            <div class="s-msg" id="msg-password"></div>
+                            <button class="s-save-btn" onclick="savePassword()">Save Changes</button>
                         </div>
 
                         <div class="s-panel" id="s-panel-email">
                             <h2>Change Email</h2>
                             <p>Update the email linked to your account.</p>
-                            <div class="s-fg"><label>New Email</label><input type="email" placeholder="Enter new email" /></div>
-                            <button class="s-save-btn">Save Changes</button>
+                            <div class="s-fg"><label>New Email</label><input type="email" id="inp-new-email" placeholder="Enter new email" /></div>
+                            <div class="s-msg" id="msg-email"></div>
+                            <button class="s-save-btn" onclick="saveEmail()">Send OTP</button>
                         </div>
 
                         <div class="s-panel" id="s-panel-address">

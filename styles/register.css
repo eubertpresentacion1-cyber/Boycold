@@ -16,17 +16,17 @@ header {
     z-index: 1000;
 }
 
-header img{
+header img {
     height: 50%;
     width: auto;
     margin: 20px 0px 15px 30px;
 }
 
-body{
+body {
     min-height: 115vh;
 }
 
-body::-webkit-scrollbar{
+body::-webkit-scrollbar {
     display: none;
 }
 
@@ -52,45 +52,48 @@ body::-webkit-scrollbar{
 
 
 
-form{
-    margin-top:20px;
-    padding-left:120px;
-    font-family:'Afacad', sans-serif;
+form {
+    margin-top: 20px;
+    padding-left: 120px;
+    font-family: 'Afacad', sans-serif;
 }
 
-h1.font{
-    font-family:'Gaegu', cursive;
-    font-size:70px;
-    color:#000000;
-    padding-top:50px;
+h1.font {
+    font-family: 'Gaegu', cursive;
+    font-size: 70px;
+    color: #000000;
+    padding-top: 50px;
     padding-left: 20px;
 }
 
-h1.font1{
-    font-family:'Gaegu', cursive;
-    font-size:70px;
-    color:#000000;
-    padding-top:50px;
+h1.font1 {
+    font-family: 'Gaegu', cursive;
+    font-size: 70px;
+    color: #000000;
+    padding-top: 50px;
     padding-left: 60px;
 }
 
-p{
-    font-family:'Afacad', sans-serif;
+p {
+    font-family: 'Afacad', sans-serif;
 }
 
-.p1{
-    font-size:18px;
-    color:#6F4E37;
-    padding-left:120px;
-    margin-bottom:17px;
+.p1 {
+    font-size: 18px;
+    color: #6F4E37;
+    padding-left: 120px;
+    margin-bottom: 17px;
 }
 
-.p2{
-    padding-left:120px;
-    font-size:14px;
+.p2 {
+    padding-left: 120px;
+    font-size: 14px;
 }
 
-#Firstname,#Lastname,#password, #email{
+#Firstname,
+#Lastname,
+#password,
+#email {
     padding: 10px;
     padding-right: 40px;
     border: 1.5px solid #6F4E37;
@@ -99,9 +102,9 @@ p{
     width: 275px;
 }
 
-.password-container{
-    position:relative;
-    width:275px;
+.password-container {
+    position: relative;
+    width: 275px;
 }
 
 .hide-icon {
@@ -116,90 +119,90 @@ p{
 }
 
 
-.password-rules{
+.password-rules {
     font-size: 14px;
 }
 
-.valid{
+.valid {
     color: green;
 }
 
-.invalid{
+.invalid {
     color: red;
 }
 
-button{
-    background-color:#6F4E37;
-    color:#fff;
-    border:none;
-    padding:10px 20px;
-    cursor:pointer;
-    font-size:30px;
-    border-radius:10px;
-    font-family:'Gaegu', cursive;
-    height:55px;
-    width:275px;
+#registerBtn {
+    background-color: #6F4E37;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 30px;
+    border-radius: 10px;
+    font-family: 'Gaegu', cursive;
+    height: 55px;
+    width: 275px;
 }
 
-button:hover{
-    background-color:#5a3d2a;
+#registerBtn:hover {
+    background-color: #5a3d2a;
 }
 
 h4 {
-    color: #6F4E37; 
+    color: #6F4E37;
 }
 
-.terms{
-    margin-top:25px;
-    font-family:'Afacad', sans-serif;
+.terms {
+    margin-top: 25px;
+    font-family: 'Afacad', sans-serif;
 }
 
 
-.terms label{
-    display:flex;
-    align-items:flex-start;
-    gap:5px;
-    font-size:14px;
-    max-width:300px;
+.terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 14px;
+    max-width: 300px;
 }
 
-.terms input[type="checkbox"]{
-    margin-top:4px;
-    cursor:pointer;
+.terms input[type="checkbox"] {
+    margin-top: 4px;
+    cursor: pointer;
     width: 14px;
     height: 14px;
 }
 
-.terms a{
-    color:#6F4E37;
-    text-decoration:none;
+.terms a {
+    color: #6F4E37;
+    text-decoration: none;
 }
 
-.terms a:hover{
-    text-decoration:underline;
+.terms a:hover {
+    text-decoration: underline;
 }
 
-.terms p{
+.terms p {
     padding-left: 30px;
 }
 
 
-.terms1 a:hover{
-    text-decoration:underline;
+.terms1 a:hover {
+    text-decoration: underline;
 }
 
-.terms1 p{
+.terms1 p {
     padding-left: 30px;
 }
 
-.otp-inputs{
+.otp-inputs {
     display: flex;
     gap: 12px;
-    margin-top:75px;
+    margin-top: 75px;
     margin-bottom: 75px;
 }
 
-.otp-inputs input{
+.otp-inputs input {
     width: 55px;
     height: 65px;
     border-radius: 15px;
@@ -210,22 +213,24 @@ h4 {
     outline: none;
 }
 
-.otp-inputs input:focus{
-    border-color:#4a90e2;
-    box-shadow:0 0 6px rgba(0,0,0,0.2);
+.otp-inputs input:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
- 
+
     /* Hide desktop side image */
-    .pic1 { display: none; }
- 
+    .pic1 {
+        display: none;
+    }
+
     /* Show hero banner below header */
     .hero-banner {
         display: block;
         margin: 14px 16px 0;
     }
- 
+
     .hero-banner img {
         width: 100%;
         height: 220px;
@@ -233,26 +238,26 @@ h4 {
         border-radius: 18px;
         display: block;
     }
- 
+
     /* Page title */
     h1.font {
         font-size: 34px;
         padding-left: 20px;
         padding-top: 22px;
     }
- 
+
     .p1 {
         font-size: 14px;
         padding-left: 20px;
         margin-top: 4px;
         margin-bottom: 2px;
     }
- 
+
     .p2 {
         padding-left: 20px;
         font-size: 13px;
     }
- 
+
     /* Form */
     form {
         padding-left: 20px;
@@ -261,39 +266,42 @@ h4 {
         display: flex;
         flex-direction: column;
     }
- 
-    #Firstname, #Lastname, #email, #password {
+
+    #Firstname,
+    #Lastname,
+    #email,
+    #password {
         width: 100%;
         height: 54px;
         border-radius: 14px;
         font-size: 15px;
     }
- 
+
     .password-container {
         width: 100%;
     }
- 
+
     .field-hint {
         max-width: 100%;
     }
- 
-    button {
+
+    #registerBtn {
         width: 100%;
         height: 60px;
         font-size: 26px;
         border-radius: 16px;
         margin-top: 24px;
     }
- 
+
     .checkbox-label {
         max-width: 100%;
     }
- 
+
     .terms p {
         text-align: center;
     }
 }
- 
+
 /* ── Error message ── */
 .error-msg {
     color: #c0392b;
@@ -305,24 +313,243 @@ h4 {
     margin: 10px 0 0 120px;
     max-width: 275px;
 }
- 
+
 /* ── Password rules ── */
 .password-rules {
     font-size: 13px;
     margin-bottom: 8px;
 }
- 
-.valid   { color: green; }
-.invalid { color: #c0392b; }
- 
+
+.valid {
+    color: green;
+}
+
+.invalid {
+    color: #c0392b;
+}
+
 /* Error msg on mobile */
 @media (max-width: 768px) {
     .error-msg {
         margin: 10px 20px 0;
         max-width: 100%;
     }
- 
+
     .password-rules {
         max-width: 100%;
+    }
+}
+
+/* ── Terms & Conditions Overlay ── */
+#tcOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+#tcOverlay.active {
+    display: flex;
+}
+
+.tc-modal {
+    background-image: url('/picture/ChatGPT Image May 27, 2026, 05_10_02 PM 2.png');
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    animation: tcSlideIn 0.25s ease;
+}
+
+@keyframes tcSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tc-header {
+    background: #6F4E37;
+    color: #fff;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.tc-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.tc-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+    width: auto;
+    height: auto;
+    font-family: inherit;
+    border-radius: 0;
+}
+
+.tc-close:hover {
+    opacity: 1;
+}
+
+.tc-body {
+    overflow-y: auto;
+    padding: 20px 24px;
+    flex: 1;
+    font-size: 0.875rem;
+    color: #444;
+    line-height: 1.65;
+}
+
+.tc-body h3 {
+    font-size: 0.9rem;
+    color: #6F4E37;
+    margin: 16px 0 6px;
+}
+
+.tc-body h3:first-child {
+    margin-top: 0;
+}
+
+.tc-body p {
+    margin: 0 0 10px;
+}
+
+.tc-body ul {
+    margin: 0 0 10px;
+    padding-left: 18px;
+}
+
+.tc-body ul li {
+    margin-bottom: 4px;
+}
+
+/* scroll indicator fade */
+.tc-scroll-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #999;
+    padding: 6px 0 2px;
+    flex-shrink: 0;
+}
+
+.tc-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.tc-accept-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: #333;
+    cursor: pointer;
+    margin-bottom: 14px;
+    line-height: 1.45;
+}
+
+.tc-accept-label input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: #6F4E37;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.tc-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.tc-btn-cancel {
+    flex: 1;
+    padding: 11px;
+    border: 1.5px solid #6F4E37;
+    background: #fff;
+    color: #6F4E37;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    width: auto;
+    height: auto;
+    font-family: 'Afacad', sans-serif;
+}
+
+.tc-btn-cancel:hover {
+    background: #f5ede8;
+}
+
+.tc-btn-confirm {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    background: #6F4E37;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s, background 0.15s;
+    width: auto;
+    height: auto;
+    font-family: 'Afacad', sans-serif;
+}
+
+.tc-btn-confirm.enabled {
+    opacity: 1;
+}
+
+.tc-btn-confirm.enabled:hover {
+    background: #5a3e2b;
+}
+
+@media (max-width: 480px) {
+    .tc-modal {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+
+    .tc-header {
+        padding: 14px 16px;
+    }
+
+    .tc-body {
+        padding: 14px 16px;
+    }
+
+    .tc-footer {
+        padding: 12px 16px 16px;
     }
 }
