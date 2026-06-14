@@ -20,10 +20,27 @@
 //     → Admin marks completed (status=completed)
 //         → if payment_method = 'cod', payment_status auto-set to 'paid'
 // ─────────────────────────────────────────────────────────────
+
+// Enable error catching
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
 session_start();
 require_once '../config/db_config.php';
 
 header('Content-Type: application/json');
+
+// Set up error handler
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false, 
+        'error' => 'Server error: ' . $errstr,
+        'file' => $errfile,
+        'line' => $errline
+    ]);
+    exit;
+});
 
 // ── Auth guard ────────────────────────────────────────────────
 if (!isset($_SESSION['user_id'])) {
@@ -39,7 +56,21 @@ $raw    = file_get_contents('php://input');
 $body   = json_decode($raw, true) ?? [];
 $action = $body['action'] ?? ($_GET['action'] ?? '');
 
+// Log the request for debugging
+error_log("Orders API - User: $userId, Action: $action, Body Keys: " . implode(',', array_keys($body)));
+
 switch ($action) {
+
+    // ── TEST ACTION (for debugging) ──────────────────────────
+    case 'test':
+        echo json_encode([
+            'success' => true,
+            'test' => 'API is working',
+            'user_id' => $userId,
+            'session_id' => session_id(),
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        break;
 
     // ── PLACE ORDER ───────────────────────────────────────────
     // Expects JSON:

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order API Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { color: #4ec9b0; }
+        h2 { color: #569cd6; margin-top: 30px; }
+        .section {
+            background: #252526;
+            border-left: 3px solid #007acc;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #1f7db9;
+        }
+        .success {
+            color: #6a9955;
+            background: #1a2d1f;
+            padding: 10px;
+            border-left-color: #6a9955;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+        .error {
+            color: #f48771;
+            background: #3d2525;
+            padding: 10px;
+            border-left-color: #f48771;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+        .info {
+            color: #569cd6;
+            background: #1f2d3d;
+            padding: 10px;
+            border-left-color: #569cd6;
+            border-radius: 3px;
+            margin: 10px 0;
+        }
+        textarea, input {
+            width: 100%;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            box-sizing: border-box;
+            margin: 10px 0;
+        }
+        pre {
+            background: #1a1a1a;
+            border: 1px solid #555;
+            padding: 15px;
+            border-radius: 3px;
+            overflow-x: auto;
+            color: #6a9955;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Order API Diagnostic Tool</h1>
+        <p>Use this tool to test your order API and diagnose "Network error" issues.</p>
+
+        <div class="section">
+            <h2>1. Test API Connection</h2>
+            <button onclick="testConnection()">Test API Endpoint</button>
+            <div id="connectionResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Test Authentication</h2>
+            <button onclick="testAuth()">Check Session/Auth</button>
+            <div id="authResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Test Order Creation</h2>
+            <label>Order Type:</label>
+            <input type="text" id="orderType" value="delivery" placeholder="delivery/dine-in/take-out">
+            
+            <label>Payment Method:</label>
+            <input type="text" id="paymentMethod" value="cod" placeholder="cod/gcash">
+            
+            <label>Delivery Address:</label>
+            <input type="text" id="address" value="Test Address" placeholder="Delivery address">
+            
+            <button onclick="testOrderCreation()">Create Test Order</button>
+            <div id="orderResult"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Browser Console Output</h2>
+            <p>Check your browser's Developer Console (F12 → Console tab) for detailed error messages.</p>
+            <button onclick="showConsoleHelp()">Show Help</button>
+        </div>
+
+        <div class="section">
+            <h2>5. Log Output</h2>
+            <p>Check the server error log at: <code>storage/logs/php_errors.log</code> or your web server's log</p>
+        </div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<div class="info">Testing...</div>';
+            
+            try {
+                const res = await fetch('../api/orders_api.php?action=test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const text = await res.text();
+                console.log('Raw Response:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ Invalid JSON Response:</strong><br>
+                            Status: ${res.status}<br>
+                            <pre>${text.substring(0, 500)}</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ API Connection OK!</strong><br>
+                            Status: ${res.status}<br>
+                            User ID: ${data.user_id}<br>
+                            Session: ${data.session_id}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ API Error:</strong><br>
+                            ${data.error || 'Unknown error'}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Network Error:</strong><br>
+                        ${err.message}<br>
+                        <em>This is the error you're seeing!</em>
+                    </div>
+                `;
+                console.error('Test Connection Error:', err);
+            }
+        }
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = '<div class="info">Testing authentication...</div>';
+            
+            try {
+                const res = await fetch('../api/orders_api.php?action=list&limit=1', {
+                    method: 'GET'
+                });
+                
+                const data = await res.json();
+                
+                if (res.status === 401) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ Not Authenticated:</strong><br>
+                            ${data.error || 'Session not found'}<br>
+                            <p>⚠️ Make sure you're logged in before placing an order!</p>
+                        </div>
+                    `;
+                } else if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Authenticated:</strong><br>
+                            Session is active. You can place orders.<br>
+                            Orders found: ${data.orders ? data.orders.length : 0}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>⚠️ Auth Check Failed:</strong><br>
+                            ${data.error || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Request Failed:</strong><br>
+                        ${err.message}
+                    </div>
+                `;
+                console.error('Auth Test Error:', err);
+            }
+        }
+
+        async function testOrderCreation() {
+            const resultDiv = document.getElementById('orderResult');
+            resultDiv.innerHTML = '<div class="info">Creating test order...</div>';
+            
+            const orderType = document.getElementById('orderType').value || 'delivery';
+            const paymentMethod = document.getElementById('paymentMethod').value || 'cod';
+            const address = document.getElementById('address').value || 'Test Address';
+            
+            const orderData = {
+                action: 'place',
+                items: [
+                    {
+                        name: 'Test Item',
+                        unitPrice: 100,
+                        qty: 1,
+                        image: '/picture/test.jpg',
+                        milk: 'Regular',
+                        addons: 'None',
+                        orderType: orderType,
+                        notes: 'Test order'
+                    }
+                ],
+                order_type: orderType,
+                payment_method: paymentMethod,
+                address: address,
+                delivery_fee: 30,
+                tax: 5,
+                notes: 'This is a test order'
+            };
+            
+            try {
+                const res = await fetch('../api/orders_api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const text = await res.text();
+                console.log('Order Response:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ Invalid Response JSON:</strong><br>
+                            <pre>${text.substring(0, 300)}</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ Order Created!</strong><br>
+                            Order ID: ${data.order_id}<br>
+                            Total: ₱${data.total}<br>
+                            Payment Method: ${data.payment_method}<br>
+                            Payment Status: ${data.payment_status}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ Order Creation Failed:</strong><br>
+                            ${data.error || 'Unknown error'}<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Network Error During Order:</strong><br>
+                        ${err.message}<br>
+                        <p>This is the error you're experiencing!</p>
+                    </div>
+                `;
+                console.error('Order Creation Error:', err);
+            }
+        }
+
+        function showConsoleHelp() {
+            alert(`
+Browser Console Instructions:
+1. Press F12 to open Developer Tools
+2. Go to the "Console" tab
+3. Try placing an order
+4. Look for error messages like:
+   - CORS errors
+   - Failed to fetch
+   - Network errors
+   - JSON parsing errors
+5. Copy the error message and check what it says
+
+Common Errors:
+- "Failed to fetch": Check if API endpoint is correct
+- "CORS error": Check Access-Control headers
+- "JSON error": API returned non-JSON response
+- "401": Not authenticated/logged in
+- "500": Server error in API
+            `);
+        }
+
+        // Run tests on load
+        window.addEventListener('load', () => {
+            console.log('Diagnostic tool loaded. Click buttons to run tests.');
+        });
+    </script>
+</body>
+</html>

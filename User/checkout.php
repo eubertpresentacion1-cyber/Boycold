@@ -457,6 +457,17 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                     headers: { 'Content-Type': 'application/json' },
                     body:    JSON.stringify(orderData)
                 });
+                
+                // Check if response is ok
+                if (!res.ok) {
+                    const errText = await res.text();
+                    console.error('API Response Error:', res.status, errText);
+                    alert('Error: ' + res.status + ' ' + res.statusText);
+                    this.disabled = false;
+                    updateTotals(subtotal);
+                    return;
+                }
+                
                 const result = await res.json();
                 if (result.success) {
                     window.location.href = '../order/status.php?order_id=' + result.order_id;
@@ -466,7 +477,8 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                     updateTotals(subtotal);
                 }
             } catch (err) {
-                alert('Network error. Please try again.');
+                console.error('Network error:', err);
+                alert('Network error: ' + err.message + '\n\nPlease check browser console for details.');
                 this.disabled = false;
                 updateTotals(subtotal);
             }
