@@ -110,11 +110,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     } elseif ($action === 'resend') {
-        $chk = $connect->prepare("SELECT otp_send FROM otp WHERE email=? AND type=? AND status='pending' AND otp_send >= NOW() - INTERVAL 60 SECOND ORDER BY id DESC LIMIT 1");
+        $chk = $connect->prepare("SELECT otp_sent FROM otp WHERE email=? AND type=? AND status='pending' AND otp_sent >= NOW() - INTERVAL 60 SECOND ORDER BY id DESC LIMIT 1");
         $chk->bind_param("ss", $email, $type);
         $chk->execute();
         $last = $chk->get_result()->fetch_assoc();
-        $wait = $last ? max(0, 60 - (time() - strtotime($last['otp_send']))) : 0;
+        $wait = $last ? max(0, 60 - (time() - strtotime($last['otp_sent']))) : 0;
 
         if ($wait > 0) {
             $error = "Please wait $wait second(s) before resending.";
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ln = $nr['lastname'] ?? '';
                 $hp = $nr['password'] ?? '';
                 $fullName = "$fn $ln";
-                $ins = $connect->prepare("INSERT INTO otp (firstname, lastname, email, password, otp, type, status, otp_send, ip) VALUES (?, ?, ?, ?, ?, 'register', 'pending', NOW(), ?)");
+                $ins = $connect->prepare("INSERT INTO otp (firstname, lastname, email, password, otp, type, status, otp_sent, ip) VALUES (?, ?, ?, ?, ?, 'register', 'pending', NOW(), ?)");
                 $ins->bind_param("ssssss", $fn, $ln, $email, $hp, $otp, $ip);
             } else {
                 $nq = $connect->prepare("SELECT firstname, lastname FROM users WHERE email=?");
@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nq->execute();
                 $nr = $nq->get_result()->fetch_assoc();
                 $fullName = $nr ? $nr['firstname'] . ' ' . $nr['lastname'] : $email;
-                $ins = $connect->prepare("INSERT INTO otp (email, otp, type, status, otp_send, ip) VALUES (?, ?, 'reset', 'pending', NOW(), ?)");
+                $ins = $connect->prepare("INSERT INTO otp (email, otp, type, status, otp_sent, ip) VALUES (?, ?, 'reset', 'pending', NOW(), ?)");
                 $ins->bind_param("sss", $email, $otp, $ip);
             }
             $ins->execute();

@@ -51,6 +51,7 @@ function sendOTPEmail(string $toEmail, string $toName, string $otp, string $type
         $mail->Password   = 'efms bayn iibc wpgq';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
+        $mail->SMTPDebug  = 0; // Set to 2 for debugging (logs SMTP communication)
 
         $mail->setFrom('boycoldcafe19@gmail.com', 'BoyCold Cafe');
         $mail->addAddress($toEmail, $toName);
@@ -58,10 +59,14 @@ function sendOTPEmail(string $toEmail, string $toName, string $otp, string $type
         $mail->Subject = $subject;
         $mail->Body    = $html;
         $mail->AltBody = "Your OTP: $otp  (valid 10 minutes)";
-        $mail->send();
+        
+        if (!$mail->send()) {
+            throw new Exception('Email send failed: ' . $mail->ErrorInfo);
+        }
         return true;
     } catch (Exception $e) {
-        error_log('Mailer Error: ' . $mail->ErrorInfo);
+        $errorMsg = 'Mailer Error: ' . $e->getMessage();
+        error_log($errorMsg);
         return false;
     }
 }

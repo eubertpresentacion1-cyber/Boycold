@@ -121,14 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Cooldown: prevent spamming OTP to the same new email within 60s
             $chk = $connect->prepare(
-                "SELECT otp_send FROM otp WHERE email=? AND type='email_change' AND status='pending'
-                 AND otp_send >= NOW() - INTERVAL 60 SECOND ORDER BY id DESC LIMIT 1"
+                "SELECT otp_sent FROM otp WHERE email=? AND type='email_change' AND status='pending'
+                 AND otp_sent >= NOW() - INTERVAL 60 SECOND ORDER BY id DESC LIMIT 1"
             );
             $chk->bind_param("s", $newEmail);
             $chk->execute();
             $lastRow = $chk->get_result()->fetch_assoc();
             if ($lastRow) {
-                $wait = max(0, 60 - (time() - strtotime($lastRow['otp_send'])));
+                $wait = max(0, 60 - (time() - strtotime($lastRow['otp_sent'])));
                 echo json_encode(['success' => false, 'error' => "Please wait {$wait}s before requesting another OTP."]);
                 exit;
             }
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ip  = $_SERVER['REMOTE_ADDR'];
 
             $ins = $connect->prepare(
-                "INSERT INTO otp (email, otp, type, status, otp_send, ip, expires_at)
+                "INSERT INTO otp (email, otp, type, status, otp_sent, ip, expires_at)
                  VALUES (?, ?, 'email_change', 'pending', NOW(), ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))"
             );
             if ($ins === false) {

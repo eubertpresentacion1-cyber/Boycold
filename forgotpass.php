@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ip       = $_SERVER['REMOTE_ADDR'];
             $fullName = $user['firstname'] . ' ' . $user['lastname'];
 
-            $ins = $connect->prepare("INSERT INTO otp (email, otp, type, status, otp_send, ip) VALUES (?, ?, 'reset', 'pending', NOW(), ?)");
+            $ins = $connect->prepare("INSERT INTO otp (email, otp, type, status, otp_sent, ip) VALUES (?, ?, 'reset', 'pending', NOW(), ?)");
             $ins->bind_param("sss", $email, $otp, $ip); $ins->execute();
             sendOTPEmail($email, $fullName, $otp, 'reset');
         }
