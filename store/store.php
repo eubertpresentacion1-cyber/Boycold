@@ -46,11 +46,11 @@ $_SESSION['user_email'] = $user['email'];
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="../user/home.php">HOME</a></li>
-                <li><a href="../user/Menu.php">MENU</a></li>
+                <li><a href="../User/home.php">HOME</a></li>
+                <li><a href="../User/Menu.php">MENU</a></li>
                 <li><a href="store.php">STORES</a></li>
-                <li class="sidebar-nav-only"><a href="../order/status.php">ORDERS</a></li>
-                <li class="sidebar-nav-only"><a href="#">FAVORITES</a></li>
+                <li class="sidebar-nav-only"><a href="../User/status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only"><a href="../User/favorites.php">FAVORITES</a></li>
             </ul>
         </nav>
         <div class="sidebar-user">
@@ -77,10 +77,10 @@ $_SESSION['user_email'] = $user['email'];
                 <i class="fa-solid fa-bars"></i>
             </div>
             <ul class="nav-links">
-                <li><a href="../user/home.php">HOME</a></li>
-                <li><a href="../user/Menu.php">MENU</a></li>
-                <li><a href="../order/status.php">ORDERS</a></li>
-                <li><a href="../user/Favorites.php">FAVORITES</a></li>
+                <li><a href="../User/home.php">HOME</a></li>
+                <li><a href="../User/Menu.php">MENU</a></li>
+                <li><a href="../User/status.php">ORDERS</a></li>
+                <li><a href="../User/favorites.php">FAVORITES</a></li>
             </ul>
         </div>
         <div class="logo">

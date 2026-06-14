@@ -761,13 +761,11 @@ footer {
         display: flex;
     }
 
-    /* Search icon anchor — stays fixed-size so it never shifts the logo */
     .nav-right-group {
-        position: relative;
+        display: none;
     }
 
     .nav-search {
-        /* Collapsed: just the icon, no width in flow */
         position: absolute;
         right: 0;
         top: 50%;
@@ -780,18 +778,17 @@ footer {
         border: 1.5px solid transparent;
         cursor: pointer;
         transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-color 0.3s, box-shadow 0.3s;
-        /* Placeholder so the right-group still has some width */
         margin-right: 0;
     }
 
-    /* Reserve space in flow so grid column doesn't collapse */
+    
     .nav-search.open {
         width: clamp(150px, 55vw, 267px);
         background: #fff;
         border-color: #6F4E37;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         cursor: default;
-        /* Expand leftward from the right edge */
+
         right: 0;
     }
 

@@ -585,7 +585,7 @@ async function verifyEmailOtp() {
 
             // Reset the Send OTP button label
             const sendBtn = document.querySelector('#s-panel-email .s-save-btn');
-            if (sendBtn) sendBtn.textContent = 'Send OTP';
+            if (sendBtn) sendBtn.textContent = 'Re-send OTP';
         } else {
             msgEl.textContent = data.error || 'Verification failed.';
             msgEl.style.color = '#c0392b';

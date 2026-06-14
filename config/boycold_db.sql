@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
                       'ready','delivered','cancelled')
                                NOT NULL DEFAULT 'pending',
   `order_type`   ENUM('dine-in','takeout','delivery')   DEFAULT 'dine-in',
+  `payment_method` ENUM('cod','gcash')                 DEFAULT 'cod',
+  `payment_status` ENUM('unpaid','paid','cancelled')    DEFAULT 'unpaid',
   `subtotal`     DECIMAL(10,2)  NOT NULL DEFAULT 0.00,
   `delivery_fee` DECIMAL(10,2)           DEFAULT 0.00,
   `tax`          DECIMAL(10,2)           DEFAULT 0.00,

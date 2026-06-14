@@ -50,11 +50,15 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <ul>
-                <li class="sidebar-nav-only"><a href="home.php">HOME</a></li>
-                <li class="sidebar-nav-only"><a href="menu.php">MENU</a></li>
+                <li><a href="Home.php">HOME</a></li>
+                <li><a href="Menu.php">MENU</a></li>
+                <li><a href="status.php">ORDER</a></li>
+                <li><a href="../store/store.php">STORES</a></li>
+                <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
-                <li class="sidebar-nav-only"><a href="status.php">ORDERS</a></li>
-                <li class="sidebar-nav-only"><a href="../store/stores.php">FIND A STORE</a></li>
+                <li><a href="../order/cart.php" class="cart-link">
+                        <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
+                    </a></li>
             </ul>
         </nav>
         <div class="sidebar-user">
@@ -420,6 +424,8 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
             }
             const finalAddress = isPickup ? branch : address;
             const payment = document.querySelector('.co-pay-card.co-pay-selected .co-pay-name')?.textContent || '';
+            const paymentMethod = payment.toLowerCase().includes('cash') ? 'cod' : 
+                                  payment.toLowerCase().includes('gcash') ? 'gcash' : 'cod';
 
             this.disabled = true;
             this.textContent = 'Placing order…';
@@ -437,11 +443,12 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                     orderType: i.orderType || orderType,
                     notes:     i.notes     || ''
                 })),
-                order_type:   orderType,
-                address:      finalAddress,
-                delivery_fee: DELIVERY_FEE,
-                tax:          TAX,
-                notes:        ''
+                order_type:      orderType,
+                payment_method:  paymentMethod,
+                address:         finalAddress,
+                delivery_fee:    DELIVERY_FEE,
+                tax:             TAX,
+                notes:           ''
             };
 
             try {

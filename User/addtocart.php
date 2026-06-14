@@ -192,10 +192,18 @@ $_SESSION['user_email'] = $user['email'];
                     <span>TOTAL</span>
                     <span id="summaryTotal">₱0.00</span>
                 </div>
-                <button class="btn-checkout">Proceed to Checkout</button>
+                <!-- Mobile: side-by-side action bar (visible on ≤600px) -->
+                <div class="mobile-action-bar">
+                    <a href="menu.php" class="btn-continue-mobile">
+                        <i class="fa-solid fa-arrow-left"></i> Continue Shopping
+                    </a>
+                    <button class="btn-checkout">Proceed to Checkout</button>
+                </div>
+                <!-- Desktop: full-width checkout button -->
+                <button class="btn-checkout btn-checkout-desktop">Proceed to Checkout</button>
                 <p class="summary-note">
                     By placing your order, you agree to our
-                    <a href="#">BoyCold Cafe Terms</a>
+                    <a href="/footer-link/terms.php">BoyCold Cafe Terms</a>
                 </p>
             </div>
         </div>
@@ -203,11 +211,11 @@ $_SESSION['user_email'] = $user['email'];
 
     <!-- FOOTER -->
     <footer>
-        <div>© 2026 BoyCold Cafe. All rights reserved.</div>
+        <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
         <div class="footer-links">
-            <a href="#">About Us</a>
-            <a href="#">Terms & Conditions</a>
-            <a href="#">Privacy</a>
+            <a href="/footer-link/about.php">About Us</a>
+            <a href="/footer-link/terms.php">Terms & Conditions</a>
+            <a href="/footer-link/privacy.php">Privacy</a>
         </div>
         <div class="footer-logo">
             BOYCOLD CAFE

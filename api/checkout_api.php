@@ -41,6 +41,7 @@ if (!$body || empty($body['items'])) {
 
 $items       = $body['items'];
 $orderType   = substr(trim($body['order_type']   ?? 'dine-in'), 0, 20);
+$paymentMethod = in_array($body['payment_method'] ?? 'cod', ['cod', 'gcash']) ? $body['payment_method'] : 'cod';
 $address     = trim($body['address']     ?? '');
 $deliveryFee = max(0, (float) ($body['delivery_fee'] ?? 0));
 $tax         = max(0, (float) ($body['tax']          ?? 0));
@@ -58,13 +59,14 @@ unset($item);
 $total = $subtotal + $deliveryFee + $tax;
 
 // ── Insert order ───────────────────────────────────────────────
+$paymentStatus = ($paymentMethod === 'gcash') ? 'paid' : 'unpaid';
 $stmt = $connect->prepare(
     "INSERT INTO orders
-       (user_id, status, order_type, subtotal, delivery_fee, tax, total, address, notes)
-     VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?)"
+       (user_id, status, order_type, payment_method, payment_status, subtotal, delivery_fee, tax, total, address, notes)
+     VALUES (?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
-$stmt->bind_param("issdddss",
-    $userId, $orderType, $subtotal, $deliveryFee, $tax, $total, $address, $orderNotes
+$stmt->bind_param("issssdddss",
+    $userId, $orderType, $paymentMethod, $paymentStatus, $subtotal, $deliveryFee, $tax, $total, $address, $orderNotes
 );
 
 if (!$stmt->execute()) {
