@@ -3,9 +3,9 @@
 // require_once 'db_config.php'; in every file that needs DB
 
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'boycold_db');
+define('DB_USER', 'u625490934_root');
+define('DB_PASS', 'Boycold2024');
+define('DB_NAME', 'u625490934_boycold_db');
 
 $connect = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($connect->connect_error) {
