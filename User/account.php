@@ -1,6 +1,51 @@
 <?php
 session_start();
 require_once '../config/db_config.php';
+require_once '../vendor/autoload.php';
+
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\SvgWriter;
+
+function ensureLoyaltyCardNo(mysqli $connect, int $userId): string {
+    $getStmt = $connect->prepare("SELECT card_no FROM users WHERE id = ?");
+    $getStmt->bind_param("i", $userId);
+    $getStmt->execute();
+    $existing = $getStmt->get_result()->fetch_assoc();
+    $getStmt->close();
+
+    if (!empty($existing['card_no'])) {
+        return $existing['card_no'];
+    }
+
+    $cardNo = 'BY-' . date('Y') . str_pad((string) $userId, 3, '0', STR_PAD_LEFT);
+
+    $checkStmt = $connect->prepare("SELECT id FROM users WHERE card_no = ? LIMIT 1");
+    $checkStmt->bind_param("s", $cardNo);
+    $checkStmt->execute();
+    $exists = $checkStmt->get_result()->num_rows > 0;
+    $checkStmt->close();
+
+    if ($exists) {
+        return $cardNo;
+    }
+
+    $updateStmt = $connect->prepare("UPDATE users SET card_no = ? WHERE id = ?");
+    $updateStmt->bind_param("si", $cardNo, $userId);
+    $updateStmt->execute();
+    $updateStmt->close();
+
+    return $cardNo;
+}
+
+function buildLoyaltyQrDataUri(string $payload): string {
+    $qrCode = new QrCode($payload, new Encoding('UTF-8'), ErrorCorrectionLevel::Low, 220, 6);
+    $writer = new SvgWriter();
+    $result = $writer->write($qrCode);
+
+    return 'data:image/svg+xml;base64,' . base64_encode($result->getString());
+}
 
 // Session guard
 if (!isset($_SESSION['user_id'])) {
@@ -32,15 +77,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     } elseif ($field === 'phone') {
         $value = trim($_POST['value'] ?? '');
+        $setDefault = isset($_POST['set_default']) && $_POST['set_default'] === '1';
+        
         if ($value !== '' && !preg_match('/^09\d{9}$/', $value)) {
             echo json_encode(['success' => false, 'error' => 'Phone must be 11 digits starting with 09 (e.g. 09123456789).']);
             exit;
         }
+        
         $stmt = $connect->prepare("UPDATE users SET phone=? WHERE id=?");
         $stmt->bind_param("si", $value, $userId);
         $stmt->execute();
         $_SESSION['user_phone'] = $value;
-        echo json_encode(['success' => true, 'value' => htmlspecialchars($value)]);
+        
+        echo json_encode(['success' => true, 'value' => htmlspecialchars($value), 'is_default' => $setDefault]);
         exit;
     } elseif ($field === 'address') {
         $value = trim($_POST['value'] ?? '');
@@ -111,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Check if email already taken by another user
-            $checkStmt = $connect->prepare("SELECT id FROM users WHERE email=? AND id!=?");
+            $checkStmt = $connect->prepare("SELECT user_name FROM users WHERE email=? AND id!=?");
             $checkStmt->bind_param("si", $newEmail, $userId);
             $checkStmt->execute();
             if ($checkStmt->get_result()->num_rows > 0) {
@@ -176,7 +225,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['success' => false, 'error' => 'Could not send OTP. Please try again later.']);
             exit;
         }
-
     } elseif ($field === 'email_verify_otp') {
         // ── Step 2: verify OTP and commit the email change ───────────
         try {
@@ -207,7 +255,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if (new DateTime() > new DateTime($row['expires_at'])) {
                 $u = $connect->prepare("UPDATE otp SET status='expired' WHERE id=?");
-                $u->bind_param("i", $row['id']); $u->execute();
+                $u->bind_param("i", $row['id']);
+                $u->execute();
                 echo json_encode(['success' => false, 'error' => 'OTP has expired. Please request a new one.']);
                 exit;
             }
@@ -217,7 +266,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($otp !== $row['otp']) {
                 $u = $connect->prepare("UPDATE otp SET attempts=attempts+1 WHERE id=?");
-                $u->bind_param("i", $row['id']); $u->execute();
+                $u->bind_param("i", $row['id']);
+                $u->execute();
                 $left = 5 - ($row['attempts'] + 1);
                 echo json_encode(['success' => false, 'error' => "Incorrect OTP. {$left} attempt(s) remaining."]);
                 exit;
@@ -225,7 +275,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // OTP correct — mark verified
             $u = $connect->prepare("UPDATE otp SET status='verified' WHERE id=?");
-            $u->bind_param("i", $row['id']); $u->execute();
+            $u->bind_param("i", $row['id']);
+            $u->execute();
 
             // Double-check the new email isn't taken (race condition guard)
             $chk2 = $connect->prepare("SELECT id FROM users WHERE email=? AND id!=?");
@@ -261,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch latest user data
 $stmt = $connect->prepare(
-    "SELECT firstname, lastname, email, phone, address, avatar, card_no FROM users WHERE id = ?"
+    "SELECT firstname, lastname, email, phone, address, avatar, card_no, user_name, loyalty_beans, loyalty_stamps FROM users WHERE id = ?"
 );
 $stmt->bind_param("i", $userId);
 $stmt->execute();
@@ -277,20 +328,100 @@ if (!$user) {
 $fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
 $email    = htmlspecialchars($user['email']);
 $phone    = $user['phone']   ? htmlspecialchars($user['phone'])   : '';
-$address  = $user['address'] ? htmlspecialchars($user['address']) : '';
+$address  = $user['address'] ? $user['address'] : '';
 $avatar   = $user['avatar']  ? htmlspecialchars($user['avatar'])  : '';
-$cardNo   = $user['card_no'] ? htmlspecialchars($user['card_no']) : '—';
+$cardNoRaw = ensureLoyaltyCardNo($connect, $userId);
+$cardNo   = htmlspecialchars($cardNoRaw);
+$loyaltyQrPayload = $cardNoRaw;
+$loyaltyQrDataUri = buildLoyaltyQrDataUri($loyaltyQrPayload);
+$userName = $user['user_name'];
+$loyaltyBeans = (int) ($user['loyalty_beans'] ?? 0);
+$loyaltyStamps = (int) ($user['loyalty_stamps'] ?? 0);
+$loyaltyDisplayBeans = min(10, max(0, $loyaltyBeans));
+$loyaltyProgressText = $loyaltyBeans >= 10
+    ? 'Stamp ready!'
+    : ($loyaltyBeans === 0
+        ? 'No beans yet — complete an order to start'
+        : $loyaltyBeans . ' of 10 beans toward your next stamp');
 
 // Fetch favorites count
-$favStmt = $connect->prepare("SELECT COUNT(*) AS cnt FROM favorites WHERE user_id = ?");
-$favStmt->bind_param("i", $userId);
+$favStmt = $connect->prepare("SELECT COUNT(*) AS cnt FROM favorites WHERE user_name = ?");
+$favStmt->bind_param("s", $userName);
 $favStmt->execute();
 $favCount = $favStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
+
+// Fetch order status counts for the account dashboard card
+$orderCountsStmt = $connect->prepare(
+    "SELECT
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count
+     FROM orders
+     WHERE user_name = ?"
+);
+$orderCountsStmt->bind_param("s", $userName);
+$orderCountsStmt->execute();
+$orderCounts = $orderCountsStmt->get_result()->fetch_assoc();
+$completedOrderCount = (int) ($orderCounts['completed_count'] ?? 0);
+$pendingOrderCount   = (int) ($orderCounts['pending_count'] ?? 0);
+$cancelledOrderCount = (int) ($orderCounts['cancelled_count'] ?? 0);
+
+$orderSummaryText = 'No orders yet';
+if ($completedOrderCount > 0 || $pendingOrderCount > 0 || $cancelledOrderCount > 0) {
+    $parts = [];
+    if ($completedOrderCount > 0) $parts[] = $completedOrderCount . ' completed';
+    if ($pendingOrderCount > 0) $parts[] = $pendingOrderCount . ' pending';
+    if ($cancelledOrderCount > 0) $parts[] = $cancelledOrderCount . ' cancelled';
+    $orderSummaryText = implode(' • ', $parts);
+}
 
 // Keep session in sync
 if ($avatar) $_SESSION['user_avatar'] = $avatar;
 $_SESSION['user_name']  = $user['firstname'] . ' ' . $user['lastname'];
 $_SESSION['user_email'] = $user['email'];
+
+// Saved delivery addresses (address book) — same `addresses` table used
+// by checkout.php's "DELIVER TO" dropdown, managed here via addresses_api.php.
+// NOTE: addresses.user_name is matched against $_SESSION['user_name'], which
+// above is the user's full name — NOT the `user_name` handle column ($userName)
+// used a few lines up for the favorites count. Kept as a separate variable
+// on purpose so this never silently breaks if that column's meaning changes.
+$addressBookKey = $_SESSION['user_name'];
+$addrStmt = $connect->prepare(
+    "SELECT id, label, recipient_name, phone, street_address, barangay, city, province, zip_code, is_default
+     FROM addresses
+     WHERE (user_id = ? OR user_name = ?)
+     ORDER BY is_default DESC, created_at DESC"
+);
+$addrStmt->bind_param("is", $userId, $addressBookKey);
+$addrStmt->execute();
+$savedAddresses = $addrStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$addrStmt->close();
+
+$defaultAddressText = '';
+if (!empty($savedAddresses)) {
+    foreach ($savedAddresses as $savedAddress) {
+        if (!empty($savedAddress['is_default'])) {
+            $addressParts = array_filter([
+                $savedAddress['street_address'] ?? '',
+                $savedAddress['barangay'] ?? '',
+                $savedAddress['city'] ?? '',
+                $savedAddress['province'] ?? '',
+                $savedAddress['zip_code'] ?? '',
+            ], static function ($part) {
+                return trim((string) $part) !== '';
+            });
+            $defaultAddressText = trim(implode(', ', $addressParts));
+            break;
+        }
+    }
+}
+
+if ($defaultAddressText !== '') {
+    $address = $defaultAddressText;
+}
+
+$addressDisplayValue = $address !== '' ? htmlspecialchars($address, ENT_QUOTES, 'UTF-8') : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -299,6 +430,7 @@ $_SESSION['user_email'] = $user['email'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/account.css">
+    <link rel="stylesheet" href="css/Address-modal.css">
     <link rel="icon" href="../picture/icon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -415,40 +547,27 @@ $_SESSION['user_email'] = $user['email'];
                         <span><?= $email ?></span>
                     </div>
 
-                    <!-- Address -->
+                    <!-- Default Address from Settings -->
                     <div class="profile-detail" id="address-display">
                         <i class="fa-solid fa-location-dot"></i>
-                        <?php if ($address): ?>
-                            <strong id="address-val"><?= $address ?></strong>
-                        <?php else: ?>
-                            <span class="placeholder-text" id="address-val">* Add your address</span>
-                        <?php endif; ?>
+                        <span id="address-val" style="display:inline-block;">
+                            <?= $addressDisplayValue !== '' ? $addressDisplayValue : '* Set default address in settings' ?>
+                        </span>
                     </div>
-                    <div class="edit-inline" id="address-edit">
-                        <input type="text" id="address-input" placeholder="e.g. 123 Mango St, BGC" maxlength="200"
-                            value="<?= $address ?>">
-                    </div>
-                    <div id="address-msg"></div>
 
                     <!-- Phone -->
                     <div class="profile-detail" id="phone-display">
                         <i class="fa-solid fa-phone"></i>
                         <?php if ($phone): ?>
-                            <span id="phone-val"><?= $phone ?></span>
+                            <span id="phone-val" data-field="phone"><?= $phone ?></span>
                         <?php else: ?>
-                            <span class="placeholder-text" id="phone-val">* Add your phone number</span>
+                            <span class="placeholder-text" id="phone-val" data-field="phone">* Add your phone number</span>
                         <?php endif; ?>
                     </div>
-                    <div class="edit-inline" id="phone-edit">
-                        <input type="tel" id="phone-input" placeholder="09XXXXXXXXX" maxlength="11"
-                            value="<?= $phone ?>">
-                    </div>
-                    <div id="phone-msg"></div>
 
                 </div>
             </div>
 
-            <!-- CARD 2: Store / Loyalty — portrait, spans 2 rows -->
             <div class="card card-store">
                 <!-- TOP: background image + yellow overlay + logo + name -->
                 <div class="store-banner">
@@ -464,33 +583,36 @@ $_SESSION['user_email'] = $user['email'];
                     <div class="loyalty">Loyalty Card</div>
                     <div class="loyalty-level">Level 1</div>
                     <div class="beans-row">
-                        <!-- FILLED bean -->
-                        <svg width="25" height="27" viewBox="0 0 25 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4.51146 24.3952C9.97896 28.2235 15.9937 24.2871 19.8221 18.8196C23.6504 13.3521 25.2909 6.35484 19.8247 2.52652C14.3586 -1.3018 8.34245 2.6333 4.51413 8.10081C0.685812 13.5683 -0.95604 20.5669 4.51146 24.3952Z" fill="#6F4E37" stroke="black" stroke-width="2" />
-                            <path d="M18.2922 4.71298C16.4327 5.04135 11.1828 7.88323 11.0734 12.6953C10.9626 17.5061 7.35316 21.4973 6.04102 22.2074C8.44773 22.2634 13.1504 19.0371 13.2598 14.225C13.3706 9.41429 16.9787 5.42312 18.2922 4.71298Z" fill="black" />
-                        </svg>
-                        <!-- EMPTY beans (4) -->
-                        <?php for ($i = 0; $i < 4; $i++): ?>
+                        <?php for ($i = 0; $i < 5; $i++): ?>
                             <svg width="25" height="27" viewBox="0 0 25 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4.51146 24.3952C9.97896 28.2235 15.9937 24.2871 19.8221 18.8196C23.6504 13.3521 25.2909 6.35484 19.8247 2.52652C14.3586 -1.3018 8.34245 2.6333 4.51413 8.10081C0.685812 13.5683 -0.95604 20.5669 4.51146 24.3952Z" stroke="black" stroke-width="2" />
+                                <path d="M4.51146 24.3952C9.97896 28.2235 15.9937 24.2871 19.8221 18.8196C23.6504 13.3521 25.2909 6.35484 19.8247 2.52652C14.3586 -1.3018 8.34245 2.6333 4.51413 8.10081C0.685812 13.5683 -0.95604 20.5669 4.51146 24.3952Z" fill="<?= $i < $loyaltyDisplayBeans ? '#6F4E37' : 'none' ?>" stroke="black" stroke-width="2" />
                                 <path d="M18.2931 4.71298C16.4337 5.04135 11.1838 7.88323 11.0743 12.6953C10.9635 17.5061 7.35414 21.4973 6.04199 22.2074C8.44871 22.2634 13.1513 19.0371 13.2608 14.225C13.3716 9.41429 16.9797 5.42312 18.2931 4.71298Z" fill="black" />
                             </svg>
                         <?php endfor; ?>
                     </div>
                     <div class="beans-row-2">
-                        <?php for ($i = 0; $i < 5; $i++): ?>
+                        <?php for ($i = 5; $i < 10; $i++): ?>
                             <svg width="25" height="27" viewBox="0 0 25 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4.51146 24.3952C9.97896 28.2235 15.9937 24.2871 19.8221 18.8196C23.6504 13.3521 25.2909 6.35484 19.8247 2.52652C14.3586 -1.3018 8.34245 2.6333 4.51413 8.10081C0.685812 13.5683 -0.95604 20.5669 4.51146 24.3952Z" stroke="black" stroke-width="2" />
+                                <path d="M4.51146 24.3952C9.97896 28.2235 15.9937 24.2871 19.8221 18.8196C23.6504 13.3521 25.2909 6.35484 19.8247 2.52652C14.3586 -1.3018 8.34245 2.6333 4.51413 8.10081C0.685812 13.5683 -0.95604 20.5669 4.51146 24.3952Z" fill="<?= $i < $loyaltyDisplayBeans ? '#6F4E37' : 'none' ?>" stroke="black" stroke-width="2" />
                                 <path d="M18.2931 4.71298C16.4337 5.04135 11.1838 7.88323 11.0743 12.6953C10.9635 17.5061 7.35414 21.4973 6.04199 22.2074C8.44871 22.2634 13.1513 19.0371 13.2608 14.225C13.3716 9.41429 16.9797 5.42312 18.2931 4.71298Z" fill="black" />
                             </svg>
                         <?php endfor; ?>
                     </div>
-                    <div class="card-no">Card no: <?= $cardNo ?></div>
+                    <div class="loyalty-progress" style="font-size:.8rem;margin-top:6px;color:#5d4020;">
+                        <?= htmlspecialchars($loyaltyProgressText, ENT_QUOTES, 'UTF-8') ?>
+                        <div style="margin-top:2px;font-weight:600;">Stamps: <?= (int) $loyaltyStamps ?></div>
+                    </div>
+                    <div class="card-no-wrapper">
+                        <span class="card-no">Card no: <?= $cardNo ?></span>
+                        <button class="qr-btn" onclick="openQRModal()" title="Show QR Code">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- CARD 5: Favorites -->
-            <div class="card card-small"onclick="window.location.href='favorites.php'">
+            <div class="card card-small" onclick="window.location.href='favorites.php'">
                 <div class="card-small-header">
                     <div class="card-small-title">Favorites</div>
                     <div class="card-small-sub">
@@ -509,10 +631,10 @@ $_SESSION['user_email'] = $user['email'];
             </div>
 
             <!-- CARD 6: Order and Deliveries -->
-            <div class="card card-small">
+            <div class="card card-small" onclick="window.location.href='orderhistory.php'">
                 <div class="card-small-header">
                     <div class="card-small-title">Order and Deliveries</div>
-                    <div class="card-small-sub">No active orders</div>
+                    <div class="card-small-sub"><?= htmlspecialchars($orderSummaryText, ENT_QUOTES, 'UTF-8') ?></div>
                 </div>
                 <div class="card-small-icon">
                     <svg width="68" height="70" viewBox="0 0 68 70" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -618,7 +740,7 @@ $_SESSION['user_email'] = $user['email'];
                                 </div>
                             </div>
                             <div class="password-rules" id="password-rules-panel" style="font-size:0.85rem;margin:12px 0;display:none;">
-                                <p id="s-length" class="invalid" style="margin:4px 0;">✘ 8–25 characters</p15                                <p id="s-uppercase" class="invalid" style="margin:4px 0;">✘ At least 1 uppercase letter</p>
+                                <p id="s-length" class="invalid" style="margin:4px 0;">✘ 8–25 characters</p15 <p id="s-uppercase" class="invalid" style="margin:4px 0;">✘ At least 1 uppercase letter</p>
                                 <p id="s-lowercase" class="invalid" style="margin:4px 0;">✘ At least 1 lowercase letter</p>
                                 <p id="s-number" class="invalid" style="margin:4px 0;">✘ At least 1 number</p>
                             </div>
@@ -636,18 +758,25 @@ $_SESSION['user_email'] = $user['email'];
 
                         <div class="s-panel" id="s-panel-address">
                             <h2>Saved Addresses</h2>
-                            <p>Manage your saved delivery addresses.</p>
-                            <div class="s-fg"><label>Address</label><input type="text" id="inp-address" placeholder="Enter your address" value="<?= htmlspecialchars($address ?? '') ?>" /></div>
+                            <p>Manage the delivery addresses used at checkout.</p>
+                            <div class="addr-book-list" id="addressBookList">
+                                <!-- rendered by JS from ADDRESS_BOOK_INITIAL -->
+                            </div>
                             <div class="s-msg" id="msg-address"></div>
-                            <button class="s-save-btn" onclick="saveField('address')">Save Address</button>
+                            <button type="button" class="s-save-btn" onclick="openAddressBookModal()">
+                                <i class="fa-solid fa-plus"></i> Add New Address
+                            </button>
                         </div>
 
                         <div class="s-panel" id="s-panel-phone">
                             <h2>Phone Number</h2>
                             <p>Update the mobile number linked to your account.</p>
                             <div class="s-fg"><label>Phone Number</label><input type="text" id="inp-phone" placeholder="09XXXXXXXXX" value="<?= htmlspecialchars($phone ?? '') ?>" maxlength="11" /></div>
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button class="s-save-btn" onclick="saveField('phone')" style="flex: 1;">Save Number</button>
+                                <button type="button" class="s-save-btn" id="phone-default-btn" onclick="setDefaultPhone()" style="flex: 1; background-color: #27ae60;">Set as Default</button>
+                            </div>
                             <div class="s-msg" id="msg-phone"></div>
-                            <button class="s-save-btn" onclick="saveField('phone')">Save Number</button>
                         </div>
 
                         <div class="s-panel" id="s-panel-payment">
@@ -675,6 +804,20 @@ $_SESSION['user_email'] = $user['email'];
         </div>
     </main>
 
+    <!-- QR MODAL -->
+    <div class="qr-modal-overlay" id="qrModalOverlay" onclick="closeQRModal(event)">
+        <div class="qr-modal">
+            <button class="qr-modal-close" onclick="closeQRModalDirect()">&times;</button>
+            <div class="qr-modal-title">Loyalty Card QR</div>
+            <div class="qr-modal-sub">Scan this code to earn points</div>
+            <div class="qr-image-wrap">
+                <img id="qrCodeImg" src="<?= htmlspecialchars($loyaltyQrDataUri, ENT_QUOTES, 'UTF-8') ?>" alt="QR Code for loyalty card" />
+            </div>
+            <div class="qr-modal-cardno"><?= $cardNo ?></div>
+            <div class="qr-modal-user"><?= $fullName ?></div>
+        </div>
+    </div>
+
     <!-- AVATAR CHOICE MODAL -->
     <div id="avatarModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:16px;padding:28px 32px;min-width:260px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.25);">
@@ -692,6 +835,101 @@ $_SESSION['user_email'] = $user['email'];
         </div>
     </div>
 
+    <!-- CAMERA MODAL -->
+    <div id="cameraModal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;">
+        <div style="background:#1a1a1a;border-radius:20px;padding:24px;width:min(480px,95vw);text-align:center;box-shadow:0 12px 48px rgba(0,0,0,.6);position:relative;">
+            <button onclick="closeCameraModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#aaa;font-size:1.3rem;cursor:pointer;line-height:1;">&#10005;</button>
+            <h3 style="margin:0 0 14px;color:#fff;font-size:1rem;font-family:'Afacad',sans-serif;">Take a Photo</h3>
+            <div style="position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:4/3;">
+                <video id="cameraStream" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+                <canvas id="cameraCanvas" style="display:none;width:100%;height:100%;object-fit:cover;"></canvas>
+                <div id="cameraPlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#666;gap:10px;">
+                    <i class="fa-solid fa-camera" style="font-size:2.5rem;"></i>
+                    <span style="font-size:.85rem;font-family:'Afacad',sans-serif;">Starting camera…</span>
+                </div>
+            </div>
+            <div id="cameraControls" style="margin-top:16px;display:flex;gap:10px;justify-content:center;align-items:center;">
+                <button id="btnFlipCamera" onclick="flipCamera()" title="Flip camera"
+                    style="background:#333;border:none;color:#fff;border-radius:50%;width:42px;height:42px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button id="btnCapture" onclick="capturePhoto()"
+                    style="background:#6F4E37;border:none;color:#fff;border-radius:50px;padding:12px 32px;font-size:.95rem;font-family:'Afacad',sans-serif;font-weight:600;cursor:pointer;letter-spacing:.5px;">
+                    Capture
+                </button>
+                <button id="btnRetake" onclick="retakePhoto()" style="display:none;background:#444;border:none;color:#fff;border-radius:50px;padding:12px 24px;font-size:.95rem;font-family:'Afacad',sans-serif;font-weight:600;cursor:pointer;">
+                    Retake
+                </button>
+                <button id="btnUsePhoto" onclick="usePhoto()" style="display:none;background:#27ae60;border:none;color:#fff;border-radius:50px;padding:12px 24px;font-size:.95rem;font-family:'Afacad',sans-serif;font-weight:600;cursor:pointer;">
+                    Use Photo
+                </button>
+            </div>
+            <p id="cameraError" style="color:#e74c3c;font-size:.82rem;font-family:'Afacad',sans-serif;margin:10px 0 0;display:none;"></p>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT ADDRESS MODAL -->
+    <div class="addr-modal-overlay" id="addressModalOverlay">
+        <div class="addr-modal">
+            <h2 class="addr-modal-title" id="addrModalTitle">Add New Address</h2>
+            <p class="addr-modal-sub" id="addrModalSub">Fill in your details below to add a new delivery address.</p>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Label (Optional)</label>
+                    <input type="text" id="addrLabel" placeholder="e.g. Home, Work">
+                </div>
+                <div class="addr-field">
+                    <label>Recipient Name</label>
+                    <input type="text" id="addrRecipient" placeholder="Full Name">
+                </div>
+            </div>
+
+            <div class="addr-field">
+                <label>Street Address</label>
+                <input type="text" id="addrStreet" placeholder="House/Building No., Street Name">
+            </div>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Barangay</label>
+                    <input type="text" id="addrBarangay" placeholder="Enter Barangay">
+                </div>
+                <div class="addr-field">
+                    <label>City/Municipality</label>
+                    <input type="text" id="addrCity" placeholder="Enter City/Municipality">
+                </div>
+            </div>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Province</label>
+                    <input type="text" id="addrProvince" placeholder="Enter Province">
+                </div>
+                <div class="addr-field">
+                    <label>Zip Code</label>
+                    <input type="text" id="addrZip" placeholder="Enter Zip Code" maxlength="4">
+                </div>
+            </div>
+
+            <label class="addr-checkbox-row">
+                <input type="checkbox" id="addrIsDefault">
+                Set as default address
+            </label>
+
+            <p class="addr-modal-msg" id="addrModalMsg"></p>
+
+            <div class="addr-modal-actions">
+                <button type="button" class="addr-btn-cancel" onclick="closeAddressBookModal()">Cancel</button>
+                <button type="button" class="addr-btn-save" id="addrSaveBtn" onclick="saveAddressBookEntry()">Save Address</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Saved delivery addresses (address book), rendered/managed by account.js
+        const ADDRESS_BOOK_INITIAL = <?= json_encode($savedAddresses) ?>;
+    </script>
     <script src="../scr/account.js"></script>
 
 </body>

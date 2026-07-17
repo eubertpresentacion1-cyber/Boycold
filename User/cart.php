@@ -11,8 +11,24 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 
 // Check if the user has any items in their cart (direct DB query)
-$stmt = $connect->prepare("SELECT COUNT(*) FROM cart WHERE user_id = ?");
+// First, get the user_name to query cart table
+$stmt = $connect->prepare("SELECT user_name FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
+$stmt->execute();
+$userRecord = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$userRecord) {
+    session_destroy();
+    header('Location: ../login.php');
+    exit;
+}
+
+$userName = $userRecord['user_name'];
+
+// Check if the user has any items in their cart (direct DB query)
+$stmt = $connect->prepare("SELECT COUNT(*) FROM cart WHERE user_name = ?");
+$stmt->bind_param("s", $userName);
 $stmt->execute();
 $stmt->bind_result($cartItemCount);
 $stmt->fetch();
@@ -30,6 +46,12 @@ $stmt->bind_param("i", $userId);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
+
+if (!$user) {
+    session_destroy();
+    header('Location: ../login.php');
+    exit;
+}
 
 $fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
 $email    = htmlspecialchars($user['email']);
@@ -97,8 +119,8 @@ $_SESSION['user_email'] = $user['email'];
             <ul class="nav-links">
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php">MENU</a></li>
-                <li><a href="favorites.php">FAVORITES</a></li>
                 <li><a href="status.php">ORDERS</a></li>
+                <li><a href="favorites.php">FAVORITES</a></li>
             </ul>
         </div>
         <div class="logo">

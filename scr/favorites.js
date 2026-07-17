@@ -22,8 +22,14 @@ function toggleSearch() {
     const btn    = document.getElementById('searchIconBtn');
     const isOpen = search.classList.toggle('open');
     btn.classList.toggle('active', isOpen);
-    if (isOpen) setTimeout(() => search.querySelector('input').focus(), 420);
-    else search.querySelector('input').value = '';
+    if (isOpen) {
+        setTimeout(() => search.querySelector('input').focus(), 420);
+    } else {
+        const inp = search.querySelector('input');
+        inp.value = '';
+        searchQuery = '';
+        renderFavs();
+    }
 }
 function toggleAvatarDropdown() {
     document.getElementById('avatarDropdown').classList.toggle('open');
@@ -37,7 +43,8 @@ document.addEventListener('click', function(e) {
     if (search && searchBtn && !search.contains(e.target) && !searchBtn.contains(e.target)) {
         search.classList.remove('open');
         searchBtn.classList.remove('active');
-        search.querySelector('input').value = '';
+        const inp = search.querySelector('input');
+        if (inp && inp.value) { inp.value = ''; searchQuery = ''; renderFavs(); }
     }
     // Avatar dropdown
     const wrap = document.querySelector('.avatar-dropdown-wrap');
@@ -48,7 +55,8 @@ document.addEventListener('click', function(e) {
 });
 
 // ── FAVORITES DATA FROM API ───────────────────────────────────
-let favItems = [];
+let favItems    = [];
+let searchQuery = ''; // current search string
 
 async function fetchFavorites() {
     try {
@@ -79,7 +87,11 @@ async function removeFav(productName) {
 
 function renderFavs() {
     const sort   = document.getElementById('favSort')?.value ?? 'default';
+    const q      = searchQuery.trim().toLowerCase();
     let   items  = [...favItems];
+
+    // Apply search filter first
+    if (q) items = items.filter(item => item.product_name.toLowerCase().includes(q));
 
     if (sort === 'price-asc')       items.sort((a,b) => a.price - b.price);
     else if (sort === 'price-desc') items.sort((a,b) => b.price - a.price);
@@ -92,7 +104,15 @@ function renderFavs() {
     if (countEl) countEl.textContent = items.length;
 
     if (items.length === 0) {
-        if (empty) empty.style.display = 'flex';
+        if (empty) {
+            // Show a different message when it's a search with no results vs truly empty
+            const isSearching = q.length > 0;
+            empty.querySelector('.fav-empty-title').textContent = isSearching ? 'No results found' : 'No favorites yet';
+            empty.querySelector('.fav-empty-desc').textContent  = isSearching
+                ? `No favorites match "${searchQuery}". Try a different search.`
+                : 'Heart any item on the menu and it will appear here.';
+            empty.style.display = 'flex';
+        }
         if (grid)  grid.style.display  = 'none';
         return;
     }
@@ -201,6 +221,16 @@ function showCartToast(name) {
 
 // ── SORT LISTENER ─────────────────────────────────────────────
 document.getElementById('favSort')?.addEventListener('change', renderFavs);
+
+// ── LIVE SEARCH INPUT ─────────────────────────────────────────
+(function () {
+    const inp = document.querySelector('#navSearch input');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+        searchQuery = this.value;
+        renderFavs();
+    });
+})();
 
 // ── INIT ─────────────────────────────────────────────────────
 fetchFavorites();

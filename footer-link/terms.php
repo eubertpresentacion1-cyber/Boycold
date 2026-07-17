@@ -18,7 +18,11 @@ $user = $stmt->get_result()->fetch_assoc();
 
 $fullName  = htmlspecialchars($user['Firstname'] . ' ' . $user['Lastname']);
 $userEmail = htmlspecialchars($user['email']);
-$avatar    = $user['avatar'] ? htmlspecialchars($user['avatar']) : '';
+$avatarRaw = $user['avatar'] ?? '';
+if ($avatarRaw !== '' && !preg_match('#^(https?://|/)#', $avatarRaw)) {
+    $avatarRaw = '/User/' . $avatarRaw;
+}
+$avatar = $avatarRaw !== '' ? htmlspecialchars($avatarRaw) : '';
 
 // Keep session in sync
 $_SESSION['user_name']  = $user['Firstname'] . ' ' . $user['Lastname'];
@@ -62,10 +66,11 @@ $_SESSION['user_email'] = $user['email'];
             <a href="/User/account.php" class="sidebar-avatar-link">
                 <div class="sidebar-avatar" id="sidebarAvatarWrap">
                     <?php if ($avatar): ?>
-                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
                     <?php else: ?>
-                        <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                         <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
                     <?php endif; ?>
                 </div>
             </a>
@@ -89,6 +94,30 @@ $_SESSION['user_email'] = $user['email'];
                 <li><a href="/User/status.php">ORDERS</a></li>
                 <li><a href="/User/favorites.php">FAVORITES</a></li>
             </ul>
+        </div>
+        <div class="logo">
+            <img src="../picture/Boycold Logo 2.png" alt="BoyCold logo">
+        </div>
+        <div class="nav-right-group">
+            <a href="/User/cart.php" class="cart-link">
+                <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i>
+            </a>
+            <div class="avatar-dropdown-wrap">
+                <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
+                    <?php if ($avatar): ?>
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
+                    <?php else: ?>
+                        <img id="navAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="navAvatarIcon"></i>
+                    <?php endif; ?>
+                </div>
+                <div class="avatar-dropdown" id="avatarDropdown">
+                    <a href="/User/account.php"><i class="fa-solid fa-user"></i> Account</a>
+                    <hr>
+                    <a href="../logout.php" class="dropdown-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
+                </div>
+            </div>
         </div>
     </nav>
 

@@ -48,7 +48,7 @@ function sendOTPEmail(string $toEmail, string $toName, string $otp, string $type
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'boycoldcafe19@gmail.com';
-        $mail->Password   = 'efms bayn iibc wpgq';
+        $mail->Password   = 'plcj mrda ruwk yvyb';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
         $mail->SMTPDebug  = 0; // Set to 2 for debugging (logs SMTP communication)
@@ -60,9 +60,7 @@ function sendOTPEmail(string $toEmail, string $toName, string $otp, string $type
         $mail->Body    = $html;
         $mail->AltBody = "Your OTP: $otp  (valid 10 minutes)";
         
-        if (!$mail->send()) {
-            throw new Exception('Email send failed: ' . $mail->ErrorInfo);
-        }
+        $mail->send();
         return true;
     } catch (Exception $e) {
         $errorMsg = 'Mailer Error: ' . $e->getMessage();

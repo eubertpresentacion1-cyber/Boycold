@@ -1,0 +1,388 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: 'Afacad', sans-serif;
+    overflow-y: hidden;
+    box-shadow: 0 -30px 224px -100px rgba(0, 0, 0, 1) inset;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    background-color: #FFF;
+    border-bottom: 2px solid #6F4E37;
+    padding: 0.6rem;
+}
+
+.nav-logo img {
+    width: 70px;
+    height: auto;
+}
+
+.pin-container{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:calc(100vh - 200px);
+    padding:2rem;
+}
+
+.form-step{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    width:100%;
+    max-width:670px;
+}
+
+.form-step.active{
+    display:flex;
+}
+
+.form-step h1{
+    font-size:4rem;
+    margin-bottom:.8rem;
+    text-align:center;
+    font-family:'Afacad',sans-serif;
+}
+
+.form-step p{
+    font-size:1.4rem;
+    margin-bottom:5rem;
+    font-family:'Afacad',sans-serif;
+    text-align:center;
+}
+
+form{
+    width:100%;
+}
+
+
+
+.pin-group{
+    width:100%;
+    margin-bottom:1.5rem;
+}
+
+.pin-inputs{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    width:100%;
+}
+
+.pin-box,
+.confirm-box{
+    width:clamp(60px, 12vw, 120px);
+    height:clamp(60px, 12vw, 120px);
+    border:1px solid #000;
+    border-radius:17px;
+    font-size:clamp(1.8rem, 3vw, 3.5rem);
+    text-align:center;
+    font-family:'Afacad',sans-serif;
+    outline:none;
+    transition:.2s;
+    margin-bottom:1rem;
+}
+
+.pin-box:focus,
+.confirm-box:focus{
+
+    border-color:#6F4E37;
+    box-shadow:0 0 0 3px rgba(111,78,55,.15);
+}
+
+.error {
+    display: flex;
+    justify-content: center;
+    color: #dc2626;
+    font-size: 18px;
+    font-family: 'Afacad', sans-serif;
+    text-align: left;
+    margin-top: 6px;
+    margin-bottom: 10rem;
+    min-height: 20px;
+    width: 100%;
+}
+
+.error-input{
+    border:2px solid #FF0000 !important;
+}
+
+.btns{
+    display:flex;
+    gap:20px;
+    max-width:510px;
+    margin:0 auto;
+}
+
+.submit-btn{
+    width:100%;
+    padding:1rem;
+    border:none;
+    border-radius:20px;
+    background:#6F4E37;
+    color:#fff;
+    font-size:1.6rem;
+    font-family:'Gaegu',cursive;
+    cursor:pointer;
+    letter-spacing: 3px;
+}
+
+.cancel-btn{
+    width:100%;
+    padding:1rem;
+    border-radius:20px;
+    border:2px solid #6F4E37;
+    background:#fff;
+    font-size:1.6rem;
+    font-family:'Gaegu',cursive;
+    cursor:pointer;
+    letter-spacing: 3px;
+}
+
+/* ---------- Success Page ---------- */
+
+.success-container{
+    width:100%;
+    max-width:700px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    text-align:center;
+}
+
+.success-image{
+    width:280px;
+    height:280px;
+    margin-bottom:2rem;
+}
+
+.success-image img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.success-container h1{
+    font-size:3rem;
+    margin-bottom:1rem;
+    white-space: nowrap;
+}
+
+.success-container p{
+    font-size:1.2rem;
+    max-width:500px;
+    margin-bottom:6rem;
+}
+
+.loginbtn {
+    padding: 1rem 6rem;
+    border-radius: 20px;
+    border: none;
+    background-color: #6F4E37;
+    color: #fff;
+    font-size: 1.8rem;
+    font-family: 'Gaegu', cursive;
+    cursor: pointer;
+}
+
+/* Tablet */
+
+/* ===========================
+   TABLET (iPad / iPad Air)
+=========================== */
+
+@media (max-width:1024px){
+    nav{
+        padding:.8rem;
+    }
+
+    .nav-logo img{
+        width:60px;
+    }
+
+    .pin-container{
+        min-height:calc(100vh - 150px);
+        padding:3rem 2rem;
+    }
+
+    .form-step{
+        max-width:560px;
+    }
+
+    .form-step h1{
+        font-size:2.8rem;
+    }
+
+    .form-step p{
+        font-size:1.2rem;
+        margin-bottom:3rem;
+    }
+
+    .pin-inputs{
+        gap:14px;
+    }
+
+    .pin-box,
+    .confirm-box{
+        width:90px;
+        height:90px;
+        font-size:2.4rem;
+        border-radius:16px;
+    }
+
+    .error{
+        font-size:16px;
+        margin-bottom:4rem;
+    }
+
+    .btns{
+        max-width:460px;
+        gap:18px;
+    }
+
+    .submit-btn,
+    .cancel-btn{
+        font-size:1.5rem;
+        padding:1rem;
+    }
+
+    /* Success */
+
+    .success-container{
+        max-width:560px;
+    }
+
+    .success-image{
+        width:220px;
+        height:220px;
+        margin-bottom:1.8rem;
+    }
+
+    .success-container h1{
+        font-size:2.5rem;
+        white-space:normal;
+        line-height:1.2;
+    }
+
+    .success-container p{
+        font-size:1.15rem;
+        margin-bottom:4rem;
+    }
+
+    .loginbtn{
+        font-size:1.5rem;
+        padding:1rem 5rem;
+    }
+
+}
+
+/* Mobile */
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media (max-width:768px){
+
+    body{
+        overflow-y:auto;
+    }
+
+    nav{
+        padding:.7rem;
+    }
+
+    .nav-logo img{
+        width:55px;
+    }
+
+    .pin-container{
+        min-height:calc(100vh - 80px);
+        padding:2rem 1.2rem;
+    }
+
+    .form-step{
+        max-width:100%;
+    }
+
+    .form-step h1{
+        font-size:2rem;
+        line-height:1.25;
+    }
+
+    .form-step p{
+        font-size:1rem;
+        margin-bottom:2rem;
+    }
+
+    .pin-inputs{
+        gap:10px;
+    }
+
+    .pin-box,
+    .confirm-box{
+        width:62px;
+        height:62px;
+        font-size:2rem;
+        border-radius:14px;
+    }
+
+    .error{
+        font-size:15px;
+        margin-bottom:2.5rem;
+        text-align:center;
+    }
+
+    .btns{
+        flex-direction:column-reverse;
+        gap:15px;
+        max-width:100%;
+    }
+
+    .submit-btn,
+    .cancel-btn{
+        width:100%;
+        font-size:1.35rem;
+    }
+
+    /* Success */
+
+    .success-container{
+        width:100%;
+        padding:0;
+    }
+
+    .success-image{
+        width:150px;
+        height:150px;
+        margin-bottom:1.5rem;
+    }
+
+    .success-container h1{
+        font-size:1.9rem;
+        white-space:normal;
+        line-height:1.3;
+        margin-bottom:1rem;
+    }
+
+    .success-container p{
+        font-size:1rem;
+        margin-bottom:2.5rem;
+        padding:0 10px;
+    }
+
+    .loginbtn{
+        width:100%;
+        padding:1rem;
+        font-size:1.4rem;
+    }
+
+}

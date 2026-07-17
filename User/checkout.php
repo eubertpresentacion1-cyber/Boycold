@@ -17,6 +17,12 @@ $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+if (!$user) {
+    session_destroy();
+    header('Location: ../login.php');
+    exit;
+}
+
 $fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
 $email    = htmlspecialchars($user['email']);
 $avatar   = $user['avatar'] ?? '';
@@ -27,7 +33,26 @@ if ($avatar) $_SESSION['user_avatar'] = $avatar;
 $_SESSION['user_name']  = $user['firstname'] . ' ' . $user['lastname'];
 $_SESSION['user_email'] = $user['email'];
 $phone    = $user['phone']   ? htmlspecialchars($user['phone'])   : '';
-$address  = $user['address'] ? htmlspecialchars($user['address']) : '';
+
+// Saved delivery addresses (address book) — most recently added
+// default first, so it's pre-selected in the DELIVER TO dropdown.
+$userName = $_SESSION['user_name'];
+$addrStmt = $connect->prepare(
+    "SELECT id, label, recipient_name, phone, street_address, barangay, city, province, zip_code, is_default
+     FROM addresses
+     WHERE user_name = ?
+     ORDER BY is_default DESC, created_at DESC"
+);
+$addrStmt->bind_param("s", $userName);
+$addrStmt->execute();
+$savedAddresses = $addrStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$addrStmt->close();
+
+// Fetch available branches for branch selection
+$branchStmt = $connect->prepare("SELECT id, branch_name FROM branches WHERE status = 'active' ORDER BY branch_name");
+$branchStmt->execute();
+$branches = $branchStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$branchStmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -36,6 +61,7 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/checkout.css">
+    <link rel="stylesheet" href="css/Address-modal.css">
     <link rel="icon" href="../picture/icon.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Afacad:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -50,8 +76,8 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="Home.php">HOME</a></li>
-                <li><a href="Menu.php">MENU</a></li>
+                <li><a href="home.php">HOME</a></li>
+                <li><a href="menu.php">MENU</a></li>
                 <li><a href="status.php">ORDER</a></li>
                 <li><a href="../store/store.php">STORES</a></li>
                 <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
@@ -154,7 +180,9 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                             <i class="fa-solid fa-phone co-icon"></i>
                             <input type="text"
                                    class="co-input"
-                                   placeholder="Phone Number"
+                                   id="phoneInput"
+                                   placeholder="09XXXXXXXXX"
+                                   maxlength="11"
                                    value="<?= $phone ?>">
                         </div>
                     </div>
@@ -164,10 +192,11 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 <div class="co-section">
                     <h3 class="co-section-title">STORE LOCATION</h3>
                     <label class="co-label">Choose a store branch</label>
-                    <select class="co-input co-select">
+                    <select class="co-input co-select" id="branchSelect">
                         <option value="">Select Branch</option>
-                        <option>BoyCold Cafe - Baliuag Bulacan</option>
-                        <option>BoyCold Cafe - Bustos Bulacan</option>
+                        <?php foreach ($branches as $branch): ?>
+                        <option value="<?= $branch['id'] ?>"><?= htmlspecialchars($branch['branch_name']) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -188,10 +217,10 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
 
                     <div style="margin-top:15px;">
                         <label class="co-label">DELIVER TO</label>
-                        <select class="co-input co-select" id="deliveryAddress">
-                            <option value="">Select Address</option>
-                            <option><?= $address ?></option>
-                        </select>
+                        <div id="addressFieldWrap"><!-- select or plain input, rendered by JS --></div>
+                        <button type="button" class="co-add-address-link" id="addAddressBtn" onclick="openAddAddressModal()">
+                            <i class="fa-solid fa-plus"></i> Add new address
+                        </button>
                     </div>
                 </div>
 
@@ -203,7 +232,7 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                     <div class="co-payment-list">
 
                         <label class="co-pay-card co-pay-selected" id="payGcash">
-                            <input type="radio" name="payment" checked class="co-radio">
+                            <input type="radio" name="payment" value="gcash" checked class="co-radio">
                             <div class="co-pay-logo co-pay-gcash">G</div>
                             <div class="co-pay-info">
                                 <div class="co-pay-name">GCash</div>
@@ -213,7 +242,7 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                         </label>
 
                         <label class="co-pay-card" id="payCod">
-                            <input type="radio" name="payment" class="co-radio">
+                            <input type="radio" name="payment" value="cod" class="co-radio">
                             <div class="co-pay-logo co-pay-cod">₱</div>
                             <div class="co-pay-info">
                                 <div class="co-pay-name">Cash On Delivery</div>
@@ -276,6 +305,64 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
 
     </div>
 
+    <!-- ADD NEW ADDRESS MODAL -->
+    <div class="addr-modal-overlay" id="addressModalOverlay">
+        <div class="addr-modal">
+            <h2 class="addr-modal-title">Add New Address</h2>
+            <p class="addr-modal-sub">Fill in your details below to add a new delivery address.</p>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Label (Optional)</label>
+                    <input type="text" id="addrLabel" placeholder="e.g. Home, Work">
+                </div>
+                <div class="addr-field">
+                    <label>Recipient Name</label>
+                    <input type="text" id="addrRecipient" placeholder="Full Name">
+                </div>
+            </div>
+
+            <div class="addr-field">
+                <label>Street Address</label>
+                <input type="text" id="addrStreet" placeholder="House/Building No., Street Name">
+            </div>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Barangay</label>
+                    <input type="text" id="addrBarangay" placeholder="Enter Barangay">
+                </div>
+                <div class="addr-field">
+                    <label>City/Municipality</label>
+                    <input type="text" id="addrCity" placeholder="Enter City/Municipality">
+                </div>
+            </div>
+
+            <div class="addr-modal-row">
+                <div class="addr-field">
+                    <label>Province</label>
+                    <input type="text" id="addrProvince" placeholder="Enter Province">
+                </div>
+                <div class="addr-field">
+                    <label>Zip Code</label>
+                    <input type="text" id="addrZip" placeholder="Enter Zip Code" maxlength="4">
+                </div>
+            </div>
+
+            <label class="addr-checkbox-row">
+                <input type="checkbox" id="addrIsDefault">
+                Set as default address
+            </label>
+
+            <p class="addr-modal-msg" id="addrModalMsg"></p>
+
+            <div class="addr-modal-actions">
+                <button type="button" class="addr-btn-cancel" onclick="closeAddAddressModal()">Cancel</button>
+                <button type="button" class="addr-btn-save" id="addrSaveBtn" onclick="saveNewAddress()">Save Address</button>
+            </div>
+        </div>
+    </div>
+
 </main>
 
     <footer>
@@ -293,6 +380,118 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
 
 
     <script>
+        /* ── Saved delivery addresses (address book) from the DB ── */
+        const SAVED_ADDRESSES = <?= json_encode($savedAddresses) ?>;
+        let addresses = Array.isArray(SAVED_ADDRESSES) ? SAVED_ADDRESSES : [];
+
+        function formatAddress(a) {
+            return [a.street_address, a.barangay, a.city, a.province, a.zip_code]
+                .filter(Boolean).join(', ');
+        }
+
+        // Renders either a <select> of saved addresses, or a plain typable
+        // input when the user has no saved addresses yet.
+        function renderAddressField() {
+            const wrap = document.getElementById('addressFieldWrap');
+            if (!wrap) return;
+
+            if (addresses.length > 0) {
+                const prevSelected = document.getElementById('addressChoice')?.value;
+                const options = addresses.map(a => {
+                    const labelPart = a.label ? a.label + ' — ' : '';
+                    return `<option value="${a.id}">${labelPart}${formatAddress(a)}</option>`;
+                }).join('');
+                wrap.innerHTML = `<select class="co-input co-select" id="addressChoice">${options}</select>`;
+                const sel = document.getElementById('addressChoice');
+                if (prevSelected && [...sel.options].some(o => o.value === prevSelected)) {
+                    sel.value = prevSelected;
+                }
+            } else {
+                wrap.innerHTML = `<input type="text" class="co-input" id="addressNewInput" placeholder="Enter delivery address">`;
+            }
+        }
+
+        function getPhoneValue() {
+            return document.getElementById('phoneInput')?.value.trim() || '';
+        }
+
+        function getAddressValue() {
+            const select = document.getElementById('addressChoice');
+            if (select) {
+                const picked = addresses.find(a => String(a.id) === select.value);
+                return picked ? formatAddress(picked) : '';
+            }
+            return document.getElementById('addressNewInput')?.value.trim() || '';
+        }
+
+        /* ── Add New Address modal ── */
+        const ADDRESS_MODAL_FIELDS = ['addrLabel','addrRecipient','addrStreet','addrBarangay','addrCity','addrProvince','addrZip'];
+
+        function openAddAddressModal() {
+            document.getElementById('addressModalOverlay').style.display = 'flex';
+        }
+
+        function closeAddAddressModal() {
+            document.getElementById('addressModalOverlay').style.display = 'none';
+            ADDRESS_MODAL_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const chk = document.getElementById('addrIsDefault');
+            if (chk) chk.checked = false;
+            const msg = document.getElementById('addrModalMsg');
+            if (msg) msg.textContent = '';
+        }
+
+        async function saveNewAddress() {
+            const label     = document.getElementById('addrLabel').value.trim();
+            const recipient = document.getElementById('addrRecipient').value.trim();
+            const street    = document.getElementById('addrStreet').value.trim();
+            const barangay  = document.getElementById('addrBarangay').value.trim();
+            const city      = document.getElementById('addrCity').value.trim();
+            const province  = document.getElementById('addrProvince').value.trim();
+            const zip       = document.getElementById('addrZip').value.trim();
+            const isDefault = document.getElementById('addrIsDefault').checked;
+
+            const msg = document.getElementById('addrModalMsg');
+            if (!recipient || !street || !barangay || !city || !province || !zip) {
+                if (msg) msg.textContent = 'Please fill in all required fields.';
+                return;
+            }
+
+            const saveBtn = document.getElementById('addrSaveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+
+            try {
+                const res = await fetch(ADDRESS_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add', label, recipient_name: recipient,
+                        phone: '',
+                        street_address: street, barangay, city, province,
+                        zip_code: zip, is_default: isDefault
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (data.address.is_default) {
+                        addresses.forEach(a => a.is_default = 0);
+                    }
+                    addresses.unshift(data.address);
+                    renderAddressField();
+                    const sel = document.getElementById('addressChoice');
+                    if (sel) sel.value = data.address.id;
+                    closeAddAddressModal();
+                } else {
+                    if (msg) msg.textContent = data.error || 'Could not save address.';
+                }
+            } catch (err) {
+                if (msg) msg.textContent = 'Network error. Please try again.';
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Address';
+        }
+
         /* ── Nav ── */
         const nav = document.getElementById('mainNav');
         function toggleSidebar() {
@@ -331,18 +530,56 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
         });
 
         /* ── Cart & Order Summary ── */
-        const CART_API  = '../api/cart_api.php';
-        const ORDER_API = '../api/orders_api.php';
+        const CART_API    = '../api/cart_api.php';
+        const ORDER_API   = '../api/orders_api.php';
+        const ADDRESS_API = '../api/addresses_api.php';
         const DELIVERY_FEE = 30;
         const TAX = 5;
+        const DIRECT_KEY = 'boycold_direct_order';
         let cartItems = [];
+        let isDirectOrder = false; // true = "buy now" from ordercustom.php (single item only)
+
+        // Render the DELIVER TO field on page load
+        renderAddressField();
 
         async function loadCart() {
+            // ── Direct "buy now" order (came from ordercustom.php) ──
+            // If a stashed item exists, check out ONLY that item and
+            // never merge it with whatever else is sitting in the
+            // user's persistent cart.
+            const directRaw = sessionStorage.getItem(DIRECT_KEY);
+            if (directRaw) {
+                try {
+                    cartItems = [JSON.parse(directRaw)];
+                    isDirectOrder = true;
+                    renderSummary();
+                    return;
+                } catch (err) {
+                    sessionStorage.removeItem(DIRECT_KEY); // corrupted — fall back to cart
+                }
+            }
+
             try {
                 const res  = await fetch(CART_API + '?action=get');
                 const data = await res.json();
                 if (data.success) {
-                    cartItems = data.items;
+                    let allItems = data.items;
+                    
+                    // ── Filter for only selected items from addtocart ──
+                    const selectedRaw = sessionStorage.getItem('boycold_selected_items');
+                    if (selectedRaw) {
+                        try {
+                            const selectedIds = JSON.parse(selectedRaw);
+                            if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+                                allItems = allItems.filter(item => selectedIds.includes(item.cartId));
+                            }
+                            sessionStorage.removeItem('boycold_selected_items'); // consume once
+                        } catch (err) {
+                            console.error('Error parsing selected items:', err);
+                        }
+                    }
+                    
+                    cartItems = allItems;
                     renderSummary();
                 } else {
                     document.getElementById('coItemList').innerHTML =
@@ -405,27 +642,32 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
 
             // Gather form values
             const activeDelivery = document.querySelector('.co-toggle-btn.co-active');
-            const orderType = activeDelivery ? activeDelivery.textContent.trim().toLowerCase() : 'delivery';
-            const isPickup  = orderType === 'pick-up';
+            const deliveryText = activeDelivery ? activeDelivery.textContent.trim().toLowerCase() : 'delivery';
+            const isPickup  = deliveryText.includes('pick');
+            const orderType = isPickup ? 'takeout' : 'delivery';
 
-            // For pick-up use the branch select; for delivery use the address select
-            const branchEl  = document.querySelector('.co-section:nth-child(2) .co-select');
-            const addressEl = document.getElementById('deliveryAddress');
-            const branch    = branchEl  ? branchEl.value  : '';
-            const address   = addressEl ? addressEl.value : '';
+            // For pick-up use the branch select; for delivery use the address field
+            const branchEl = document.getElementById('branchSelect');
+            const branchId = branchEl ? branchEl.value : '';
+            const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : '';
+            const address  = getAddressValue();
+            const phone    = getPhoneValue();
 
-            if (!branch) {
+            if (!branchId) {
                 alert('Please select a store branch.');
                 return;
             }
             if (!isPickup && !address) {
-                alert('Please select a delivery address.');
+                alert('Please select or enter a delivery address.');
                 return;
             }
-            const finalAddress = isPickup ? branch : address;
-            const payment = document.querySelector('.co-pay-card.co-pay-selected .co-pay-name')?.textContent || '';
-            const paymentMethod = payment.toLowerCase().includes('cash') ? 'cod' : 
-                                  payment.toLowerCase().includes('gcash') ? 'gcash' : 'cod';
+            if (!phone) {
+                alert('Please provide a contact number.');
+                return;
+            }
+            const finalAddress = isPickup ? branchName : address;
+            const selectedPayment = document.querySelector('input[name="payment"]:checked')?.value || 'cod';
+            const paymentMethod = ['gcash', 'cod'].includes(selectedPayment) ? selectedPayment : 'cod';
 
             this.disabled = true;
             this.textContent = 'Placing order…';
@@ -445,10 +687,16 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 })),
                 order_type:      orderType,
                 payment_method:  paymentMethod,
+                branch_id:       branchId,
                 address:         finalAddress,
+                contact_number:  phone,
                 delivery_fee:    DELIVERY_FEE,
                 tax:             TAX,
-                notes:           ''
+                notes:           '',
+                // Only let the server clear the persistent cart when this
+                // order actually came from it. A direct "buy now" order
+                // must never wipe out unrelated items sitting in the cart.
+                from_cart:       !isDirectOrder
             };
 
             try {
@@ -470,7 +718,8 @@ $address  = $user['address'] ? htmlspecialchars($user['address']) : '';
                 
                 const result = await res.json();
                 if (result.success) {
-                    window.location.href = 'status.php?order_id=' + result.order_id;
+                    if (isDirectOrder) sessionStorage.removeItem(DIRECT_KEY);
+                    window.location.href = 'status.php?order_id=' + encodeURIComponent(result.order_id);
                 } else {
                     alert('Error placing order: ' + (result.error || 'Unknown error'));
                     this.disabled = false;

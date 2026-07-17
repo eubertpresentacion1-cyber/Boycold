@@ -61,15 +61,16 @@ $selectedSauce = ($productAddon && isset($sauceOptions[$productAddon])) ? $produ
 
 // Waffles & Quesadilla: hide Milk Choice and Add-ons entirely
 $noAddonItems = [
-    'Chocolate waffle',
-    'Biscoff waffle',
-    'Oreo waffle',
-    'Strawberry waffle',
-    'tiramisu waffle',
-    'ube waffle',
+    'Lolly Chocolate waffle',
+    'Lolly Matcha waffle',
+    'Lolly Biscoff waffle',
+    'Lolly Oreo waffle',
+    'Lolly Strawberry waffle',
+    'Lolly Tiramisu waffle',
+    'Lolly Ube waffle',
     'Beef Quesadilla',
     'Chicken Quesadilla',
-    'Messy Tuna Spinach',
+    'Messy Tuna Quesadilla',
     'Beef Natchos',
 ];
 $isNoAddonItem = in_array($productName, $noAddonItems);
@@ -300,7 +301,7 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                             <i class="fa-solid fa-cart-shopping"></i>
                             Add to Cart
                         </button>
-                        <button class="btn checkout-btn" onclick="window.location.href='checkout.php'">
+                        <button class="btn checkout-btn">
                             Proceed to Checkout
                             <i class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -492,39 +493,17 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
             }
         });
 
-        /* ── Proceed to Checkout button ── */
-        document.querySelector('.btn.checkout-btn').addEventListener('click', async function() {
+        /* ── Proceed to Checkout button ──
+           "Buy now" for THIS item only. We do NOT add it to the shared
+           DB cart (that would merge it with whatever else is already
+           in the user's cart on addtocart.php). Instead we stash it in
+           sessionStorage and flag the navigation as a direct order —
+           checkout.php checks for this and, when present, checks out
+           only this single item instead of loading the full cart. */
+        document.querySelector('.btn.checkout-btn').addEventListener('click', function() {
             const item = buildCartItem();
-            this.disabled = true;
-            this.textContent = 'Adding…';
-
-            try {
-                const res = await fetch('../api/cart_api.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'add',
-                        product_name: item.name,
-                        quantity: item.qty,
-                        milk: item.milk,
-                        addons: item.addons,
-                        order_type: item.orderType,
-                        notes: item.notes
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.href = 'checkout.php';
-                } else {
-                    alert('Failed to add to cart. Please try again.');
-                    this.disabled = false;
-                    this.innerHTML = 'Proceed to Checkout <i class="fa-solid fa-arrow-right"></i>';
-                }
-            } catch (err) {
-                alert('Network error. Please try again.');
-                this.disabled = false;
-                this.innerHTML = 'Proceed to Checkout <i class="fa-solid fa-arrow-right"></i>';
-            }
+            sessionStorage.setItem('boycold_direct_order', JSON.stringify(item));
+            window.location.href = 'checkout.php?mode=direct';
         });
 
         /* ── Option Buttons ── */
@@ -616,25 +595,6 @@ $isNoAddonItem = in_array($productName, $noAddonItems);
                 search.querySelector('input').value = '';
             }
         });
-
-        // ── ORDER NOW → CHECKOUT ─────────────────────────────────
-        function proceedToCheckout() {
-            const custom = buildCustomSummary();
-            const totalText = document.getElementById('ocTotal').textContent.replace('₱', '');
-            const params = new URLSearchParams({
-                name: PRODUCT_NAME,
-                price: totalText,
-                image: PRODUCT_IMAGE,
-                qty: qty,
-                size: custom.size,
-                sugar: custom.sugar,
-                milk: custom.milk,
-                ice: custom.ice,
-                addons: custom.addons,
-                notes: custom.notes
-            });
-            window.location.href = 'checkout.php?';
-        }
     </script>
 
 </body>

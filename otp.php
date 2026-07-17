@@ -7,6 +7,37 @@ $mode = $_GET['mode'] ?? ($_SESSION['otp_type'] ?? '');
 $error = '';
 $success = '';
 
+function ensureLoyaltyCardNo(mysqli $connect, int $userId): string {
+    $getStmt = $connect->prepare("SELECT card_no FROM users WHERE id = ?");
+    $getStmt->bind_param("i", $userId);
+    $getStmt->execute();
+    $existing = $getStmt->get_result()->fetch_assoc();
+    $getStmt->close();
+
+    if (!empty($existing['card_no'])) {
+        return $existing['card_no'];
+    }
+
+    $cardNo = 'BY-' . date('Y') . str_pad((string) $userId, 3, '0', STR_PAD_LEFT);
+
+    $checkStmt = $connect->prepare("SELECT id FROM users WHERE card_no = ? LIMIT 1");
+    $checkStmt->bind_param("s", $cardNo);
+    $checkStmt->execute();
+    $exists = $checkStmt->get_result()->num_rows > 0;
+    $checkStmt->close();
+
+    if ($exists) {
+        return $cardNo;
+    }
+
+    $updateStmt = $connect->prepare("UPDATE users SET card_no = ? WHERE id = ?");
+    $updateStmt->bind_param("si", $cardNo, $userId);
+    $updateStmt->execute();
+    $updateStmt->close();
+
+    return $cardNo;
+}
+
 if ($mode === 'register') {
     if (empty($_SESSION['otp_email'])) {
         header('Location: register.php');
@@ -72,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $ins->execute();
 
                     // ── Assign loyalty card number ────────────────────────
-                    // Get this user's id (handles both fresh INSERT and ON DUPLICATE KEY)
                     $uid = $connect->insert_id;
                     if (!$uid) {
                         $eid = $connect->prepare("SELECT id FROM users WHERE email=?");
@@ -81,23 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $uid = $eid->get_result()->fetch_assoc()['id'];
                     }
 
-                    // Only assign once — skip if this user already has a card
-                    $chkCard = $connect->prepare("SELECT card_no FROM users WHERE id=?");
-                    $chkCard->bind_param("i", $uid);
-                    $chkCard->execute();
-                    $existingCard = $chkCard->get_result()->fetch_assoc()['card_no'];
-
-                    if (!$existingCard) {
-                        // Count how many users already have a card assigned,
-                        // then make this user the next number in the sequence.
-                        $cntStmt = $connect->query("SELECT COUNT(*) AS total FROM users WHERE card_no IS NOT NULL");
-                        $total   = (int) $cntStmt->fetch_assoc()['total'];
-                        $cardNo  = str_pad($total + 1, 3, '0', STR_PAD_LEFT);
-
-                        $crd = $connect->prepare("UPDATE users SET card_no=? WHERE id=?");
-                        $crd->bind_param("si", $cardNo, $uid);
-                        $crd->execute();
-                    }
+                    ensureLoyaltyCardNo($connect, (int) $uid);
                     // ─────────────────────────────────────────────────────
 
                     unset($_SESSION['otp_email'], $_SESSION['otp_type']);

@@ -689,6 +689,8 @@ footer {
     flex-wrap: wrap;
     gap: 10px;
     font-size: 13px;
+    background: transparent;
+    border: none;
 }
 
 .footer-links {

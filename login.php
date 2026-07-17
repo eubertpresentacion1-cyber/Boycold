@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !$password) {
         $error = 'Email and password are required.';
     } else {
-        $stmt = $connect->prepare("SELECT id, firstname, lastname, password FROM users WHERE email=? AND is_verified=1");
+        $stmt = $connect->prepare("SELECT id, firstname, lastname, user_name, password FROM users WHERE email=? AND is_verified=1");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id']    = $user['id'];
             $_SESSION['user_email'] = $email;
-            $_SESSION['user_name']  = $user['firstname'] . ' ' . $user['lastname'];
+            $_SESSION['user_name']  = $user['user_name'];
 
             if ($remember) {
                 setcookie('remember_email', $email, time() + (86400 * 30), '/');

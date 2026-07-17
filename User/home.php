@@ -11,18 +11,30 @@ if (!isset($_SESSION['user_id'])) {
 $userId = $_SESSION['user_id'];
 
 // Fetch fresh user data from DB (same pattern as account.php)
-$stmt = $connect->prepare("SELECT Firstname, Lastname, email, avatar FROM users WHERE id=?");
+$stmt = $connect->prepare("SELECT Firstname, Lastname, user_name, email, avatar FROM users WHERE id=?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
 
+if (!$user) {
+    session_destroy();
+    header('Location: ../login.php');
+    exit;
+}
+
 $fullName  = htmlspecialchars($user['Firstname'] . ' ' . $user['Lastname']);
 $userEmail = htmlspecialchars($user['email']);
 $avatar    = $user['avatar'] ? htmlspecialchars($user['avatar']) : '';
+$userName  = $user['user_name'];
 
 // Keep session in sync
 $_SESSION['user_name']  = $user['Firstname'] . ' ' . $user['Lastname'];
 $_SESSION['user_email'] = $user['email'];
+
+// Set default branch if not set
+if (!isset($_SESSION['branch_id'])) {
+    $_SESSION['branch_id'] = 1; // Default to Baliuag
+}
 ?>
 <html lang="en">
 
@@ -52,7 +64,7 @@ $_SESSION['user_email'] = $user['email'];
                 <li><a href="../store/store.php">STORES</a></li>
                 <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
-                <li><a href="../order/cart.php" class="cart-link">
+                <li><a href="cart.php" class="cart-link">
                         <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
                     </a></li>
             </ul>

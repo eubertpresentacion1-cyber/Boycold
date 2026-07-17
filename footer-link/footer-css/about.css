@@ -89,7 +89,7 @@ html {
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.08);
 }
 
-sidebar-avatar {
+.sidebar-avatar {
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -255,13 +255,13 @@ sidebar-avatar {
     transition: color 0.3s ease;
     flex-shrink: 0;
     padding: 6px;
-    margin-left: 40px;
+    margin-left: 0;
 }
 
 .nav-links {
     list-style: none;
     padding: 0;
-    margin-left: 50px;
+    margin-left: 0;
     display: flex;
     gap: 5px;
 }
@@ -474,9 +474,7 @@ sidebar-avatar {
 .about-hero {
     display: grid;
     grid-template-columns: 2.5fr 1fr;
-    /* tall enough to give the overflowing image room */
     min-height: 600px;
-    /* allow the image to overflow the section without being clipped */
     overflow: visible;
     position: relative;
 }
@@ -511,7 +509,6 @@ sidebar-avatar {
     left: 0;
     bottom: 0;
     width: 50%;
-    /* half the text width */
     height: 2px;
     background: #1e1e1e;
 }
@@ -554,25 +551,18 @@ sidebar-avatar {
     font-weight: 600;
 }
 
-/* RIGHT panel — brown background only */
 .about-hero-right {
     background: #6F4E37;
     position: relative;
     min-height: 600px;
-    /* do NOT clip — image needs to overflow left into the white panel */
     overflow: visible;
 }
 
-/* The image container: floats centered on the split line */
 .about-img-placeholder {
     position: absolute;
-    /* vertically centered in the brown panel */
     top: 52%;
-    /* sit right on the left edge of the brown panel,
-       then shift left by half its own width so it straddles the split */
     left: 0;
     transform: translate(-50%, -50%);
-    /* image size — adjust to taste */
     width: clamp(360px, 46vw, 820px);
     height: clamp(500px, 63vw, 950px);
     z-index: 10;
@@ -792,7 +782,6 @@ footer {
         min-height: auto;
     }
 
-    /* on tablet/mobile, just show image naturally in the brown panel */
     .about-hero-right {
         min-height: 380px;
         overflow: hidden;
@@ -847,6 +836,10 @@ footer {
 
     .sidebar-user-email {
         font-size: 11px;
+    }
+
+    .nav-right-group {
+        display:none;
     }
 
     .nav-box {

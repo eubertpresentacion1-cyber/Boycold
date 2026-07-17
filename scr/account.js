@@ -74,7 +74,10 @@ async function saveField(field) {
                 ['display-fullname'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = fn; });
                 document.querySelectorAll('.profile-name, .account-name, [data-field="fullname"]').forEach(el => el.textContent = fn);
             } else if (field === 'phone') {
-                document.querySelectorAll('.profile-phone, [data-field="phone"]').forEach(el => el.textContent = data.value || '—');
+                const phoneVal = data.value || '';
+                document.querySelectorAll('.profile-phone, [data-field="phone"]').forEach(el => el.textContent = phoneVal || '—');
+                // Also update profile card phone display
+                updatePhoneInProfile(phoneVal);
             } else if (field === 'address') {
                 document.querySelectorAll('.profile-address, [data-field="address"]').forEach(el => el.textContent = data.value || '—');
             }
@@ -133,23 +136,211 @@ async function saveField(field) {
     setTimeout(() => { msgEl.textContent = ''; }, 3000);
 }
 
-// ── Avatar modal ───────────────────────────────────────────
+// ── Set phone as default ───────────────────────────────────
+async function setDefaultPhone() {
+    const phoneInput = document.getElementById('inp-phone');
+    const phone = phoneInput.value.trim();
+    const msgEl = document.getElementById('msg-phone');
+    
+    if (!phone) {
+        msgEl.textContent = 'Please enter a phone number first.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+    
+    if (!/^09\d{9}$/.test(phone)) {
+        msgEl.textContent = 'Phone must be 11 digits starting with 09.';
+        msgEl.style.color = '#c0392b';
+        return;
+    }
+
+    const btn = document.getElementById('phone-default-btn');
+    btn.disabled = true;
+    btn.textContent = 'Setting...';
+
+    try {
+        const fd = new FormData();
+        fd.append('field', 'phone');
+        fd.append('value', phone);
+        fd.append('set_default', '1');
+
+        const res = await fetch('account.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        
+        if (data.success) {
+            msgEl.textContent = 'Phone set as default! ✓';
+            msgEl.style.color = '#27ae60';
+            // Update profile card immediately
+            updatePhoneInProfile(phone);
+            setTimeout(() => { msgEl.textContent = ''; }, 3000);
+        } else {
+            msgEl.textContent = data.error || 'Could not set as default.';
+            msgEl.style.color = '#c0392b';
+        }
+    } catch (err) {
+        msgEl.textContent = 'Network error. Please try again.';
+        msgEl.style.color = '#c0392b';
+    }
+    
+    btn.disabled = false;
+    btn.textContent = 'Set as Default';
+}
+
+// Update phone display in profile card
+function updatePhoneInProfile(phone) {
+    const phoneVal = document.getElementById('phone-val');
+    if (phoneVal) {
+        if (phone) {
+            phoneVal.textContent = phone;
+            phoneVal.className = '';
+        } else {
+            phoneVal.textContent = '* Add your phone number';
+            phoneVal.className = 'placeholder-text';
+        }
+    }
+}
+
+// ── Avatar choice modal ────────────────────────────────────
 function openAvatarModal() {
     document.getElementById('avatarModal').style.display = 'flex';
 }
 function closeAvatarModal() {
     document.getElementById('avatarModal').style.display = 'none';
 }
-function triggerCamera() {
-    document.getElementById('avatarCameraInput').click();
-}
 function triggerFilePicker() {
+    closeAvatarModal();
     document.getElementById('avatarFileInput').click();
 }
 const avatarModal = document.getElementById('avatarModal');
 if (avatarModal) {
     avatarModal.addEventListener('click', function (e) {
         if (e.target === this) closeAvatarModal();
+    });
+}
+
+// ── Camera (getUserMedia) ──────────────────────────────────
+let _cameraStream  = null;   // active MediaStream
+let _facingMode    = 'user'; // 'user' = front, 'environment' = back
+let _capturedBlob  = null;   // captured image as Blob
+
+async function triggerCamera() {
+    closeAvatarModal();
+
+    // On mobile, if getUserMedia isn't supported, fall back to capture input
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        document.getElementById('avatarCameraInput').click();
+        return;
+    }
+
+    _facingMode   = 'user';
+    _capturedBlob = null;
+    _resetCameraUI();
+    document.getElementById('cameraModal').style.display = 'flex';
+    await _startCamera();
+}
+
+async function _startCamera() {
+    const errEl = document.getElementById('cameraError');
+    errEl.style.display = 'none';
+
+    // Stop any existing stream first
+    _stopCamera();
+
+    try {
+        _cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: _facingMode, width: { ideal: 1280 }, height: { ideal: 960 } },
+            audio: false
+        });
+        const video = document.getElementById('cameraStream');
+        video.srcObject = _cameraStream;
+        video.style.display = 'block';
+        document.getElementById('cameraCanvas').style.display = 'none';
+        document.getElementById('cameraPlaceholder').style.display = 'none';
+    } catch (err) {
+        let msg = 'Could not access the camera.';
+        if (err.name === 'NotAllowedError')  msg = 'Camera permission denied. Please allow camera access and try again.';
+        if (err.name === 'NotFoundError')    msg = 'No camera found on this device.';
+        if (err.name === 'NotReadableError') msg = 'Camera is already in use by another application.';
+        errEl.textContent    = msg;
+        errEl.style.display  = 'block';
+        document.getElementById('cameraPlaceholder').style.display = 'flex';
+    }
+}
+
+function _stopCamera() {
+    if (_cameraStream) {
+        _cameraStream.getTracks().forEach(t => t.stop());
+        _cameraStream = null;
+    }
+    const video = document.getElementById('cameraStream');
+    if (video) video.srcObject = null;
+}
+
+function _resetCameraUI() {
+    document.getElementById('btnCapture').style.display  = '';
+    document.getElementById('btnFlipCamera').style.display = '';
+    document.getElementById('btnRetake').style.display   = 'none';
+    document.getElementById('btnUsePhoto').style.display = 'none';
+    document.getElementById('cameraCanvas').style.display = 'none';
+    document.getElementById('cameraStream').style.display = 'block';
+    document.getElementById('cameraPlaceholder').style.display = 'flex';
+    document.getElementById('cameraError').style.display = 'none';
+}
+
+function capturePhoto() {
+    const video  = document.getElementById('cameraStream');
+    const canvas = document.getElementById('cameraCanvas');
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Freeze: hide video, show canvas snapshot
+    video.style.display  = 'none';
+    canvas.style.display = 'block';
+
+    // Convert canvas to Blob for upload
+    canvas.toBlob(blob => {
+        _capturedBlob = blob;
+    }, 'image/jpeg', 0.92);
+
+    // Swap buttons: hide Capture+Flip, show Retake+Use
+    document.getElementById('btnCapture').style.display    = 'none';
+    document.getElementById('btnFlipCamera').style.display = 'none';
+    document.getElementById('btnRetake').style.display     = '';
+    document.getElementById('btnUsePhoto').style.display   = '';
+}
+
+function retakePhoto() {
+    _capturedBlob = null;
+    _resetCameraUI();
+    _startCamera();
+}
+
+function usePhoto() {
+    if (!_capturedBlob) return;
+    const file = new File([_capturedBlob], 'camera_photo_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+    closeCameraModal();
+    handleAvatarFile(file);
+}
+
+function closeCameraModal() {
+    _stopCamera();
+    _capturedBlob = null;
+    document.getElementById('cameraModal').style.display = 'none';
+}
+
+async function flipCamera() {
+    _facingMode = _facingMode === 'user' ? 'environment' : 'user';
+    _capturedBlob = null;
+    _resetCameraUI();
+    await _startCamera();
+}
+
+// Close camera modal on backdrop click
+const cameraModal = document.getElementById('cameraModal');
+if (cameraModal) {
+    cameraModal.addEventListener('click', function (e) {
+        if (e.target === this) closeCameraModal();
     });
 }
 
@@ -331,6 +522,252 @@ function showMsg(panelKey, text, isError) {
     el.style.marginTop = '8px';
     el.style.fontSize = '0.85rem';
 }
+
+// ── Address book (Saved Addresses panel) ───────────────────
+// Same `addresses` table + addresses_api.php used by checkout.php,
+// so anything added/edited/deleted here is reflected at checkout too.
+let addressBook = Array.isArray(typeof ADDRESS_BOOK_INITIAL !== 'undefined' ? ADDRESS_BOOK_INITIAL : null)
+    ? ADDRESS_BOOK_INITIAL : [];
+let editingAddressId = null; // null = add mode, otherwise the id being edited
+const ADDRESS_API = '../api/addresses_api.php';
+const ADDRESS_MODAL_FIELDS = ['addrLabel', 'addrRecipient', 'addrStreet', 'addrBarangay', 'addrCity', 'addrProvince', 'addrZip'];
+
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function formatAddressLine(a) {
+    return [a.street_address, a.barangay, a.city, a.province, a.zip_code]
+        .filter(Boolean).map(escapeHtml).join(', ');
+}
+
+// ── Initialize and update profile with default address ────
+function initializeDefaultAddressDisplay() {
+    const defaultAddr = addressBook.find(a => Number(a.is_default) === 1);
+    const addressVal = document.getElementById('address-val');
+    if (addressVal) {
+        if (defaultAddr) {
+            const formatted = formatAddressLine(defaultAddr);
+            addressVal.textContent = formatted;
+            addressVal.className = '';
+        } else {
+            addressVal.textContent = '* Set default address in settings';
+            addressVal.className = 'placeholder-text';
+        }
+    }
+}
+
+// Call on page load to set initial default address display
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDefaultAddressDisplay);
+} else {
+    initializeDefaultAddressDisplay();
+}
+
+// Update the profile card when default address changes
+function updateProfileDefaultAddress() {
+    initializeDefaultAddressDisplay();
+}
+
+function renderAddressBook() {
+    const list = document.getElementById('addressBookList');
+    if (!list) return;
+
+    if (!addressBook.length) {
+        list.innerHTML = '<p class="addr-book-empty">No saved addresses yet. Add one so it\u2019s ready at checkout.</p>';
+        return;
+    }
+
+    list.innerHTML = addressBook.map(a => `
+        <div class="addr-book-card">
+            <div class="addr-book-card-top">
+                <span class="addr-book-label">${escapeHtml(a.label) || 'Address'}</span>
+                ${Number(a.is_default) === 1 ? '<span class="addr-book-default-badge">Default</span>' : ''}
+            </div>
+            <div class="addr-book-recipient">${escapeHtml(a.recipient_name)}</div>
+            <div class="addr-book-line">${formatAddressLine(a)}</div>
+            <div class="addr-book-actions">
+                ${Number(a.is_default) !== 1 ? `<button type="button" class="addr-book-btn" onclick="setDefaultAddress(${a.id})">Set Default</button>` : ''}
+                <button type="button" class="addr-book-btn" onclick="openEditAddressModal(${a.id})">Edit</button>
+                <button type="button" class="addr-book-btn addr-book-btn-danger" onclick="deleteAddressBookEntry(${a.id})">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openAddressBookModal() {
+    editingAddressId = null;
+    document.getElementById('addrModalTitle').textContent = 'Add New Address';
+    document.getElementById('addrModalSub').textContent = 'Fill in your details below to add a new delivery address.';
+    document.getElementById('addrSaveBtn').textContent = 'Save Address';
+    ADDRESS_MODAL_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('addrIsDefault').checked = false;
+    document.getElementById('addrModalMsg').textContent = '';
+    document.getElementById('addressModalOverlay').style.display = 'flex';
+}
+
+function openEditAddressModal(id) {
+    const a = addressBook.find(x => Number(x.id) === Number(id));
+    if (!a) return;
+    editingAddressId = id;
+    document.getElementById('addrModalTitle').textContent = 'Edit Address';
+    document.getElementById('addrModalSub').textContent = 'Update your delivery details below.';
+    document.getElementById('addrSaveBtn').textContent = 'Save Changes';
+    document.getElementById('addrLabel').value       = a.label || '';
+    document.getElementById('addrRecipient').value   = a.recipient_name || '';
+    document.getElementById('addrStreet').value      = a.street_address || '';
+    document.getElementById('addrBarangay').value    = a.barangay || '';
+    document.getElementById('addrCity').value        = a.city || '';
+    document.getElementById('addrProvince').value    = a.province || '';
+    document.getElementById('addrZip').value         = a.zip_code || '';
+    document.getElementById('addrIsDefault').checked = Number(a.is_default) === 1;
+    document.getElementById('addrModalMsg').textContent = '';
+    document.getElementById('addressModalOverlay').style.display = 'flex';
+}
+
+function closeAddressBookModal() {
+    document.getElementById('addressModalOverlay').style.display = 'none';
+    editingAddressId = null;
+}
+
+async function saveAddressBookEntry() {
+    const label     = document.getElementById('addrLabel').value.trim();
+    const recipient = document.getElementById('addrRecipient').value.trim();
+    const street    = document.getElementById('addrStreet').value.trim();
+    const barangay  = document.getElementById('addrBarangay').value.trim();
+    const city      = document.getElementById('addrCity').value.trim();
+    const province  = document.getElementById('addrProvince').value.trim();
+    const zip       = document.getElementById('addrZip').value.trim();
+    const isDefault = document.getElementById('addrIsDefault').checked;
+
+    const msg = document.getElementById('addrModalMsg');
+    if (!recipient || !street || !barangay || !city || !province || !zip) {
+        if (msg) msg.textContent = 'Please fill in all required fields.';
+        return;
+    }
+
+    const saveBtn  = document.getElementById('addrSaveBtn');
+    const isEditing = !!editingAddressId;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving\u2026';
+
+    const payload = {
+        action: isEditing ? 'edit' : 'add',
+        label,
+        recipient_name: recipient,
+        street_address: street,
+        barangay,
+        city,
+        province,
+        zip_code: zip,
+        is_default: isDefault
+    };
+    if (isEditing) {
+        payload.id = editingAddressId;
+        const existing = addressBook.find(a => Number(a.id) === Number(editingAddressId));
+        payload.phone = existing ? existing.phone || '' : '';
+    } else {
+        payload.phone = '';
+    }
+
+    try {
+        const res = await fetch(ADDRESS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (data.address.is_default) {
+                addressBook.forEach(a => a.is_default = 0);
+            }
+            if (isEditing) {
+                const idx = addressBook.findIndex(a => Number(a.id) === Number(editingAddressId));
+                if (idx !== -1) addressBook[idx] = data.address;
+            } else {
+                addressBook.unshift(data.address);
+            }
+            renderAddressBook();
+            // Update profile card if this address is now default
+            if (data.address.is_default) {
+                updateProfileDefaultAddress();
+            }
+            closeAddressBookModal();
+        } else {
+            if (msg) msg.textContent = data.error || 'Could not save address.';
+        }
+    } catch (err) {
+        if (msg) msg.textContent = 'Network error. Please try again.';
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = isEditing ? 'Save Changes' : 'Save Address';
+}
+
+async function setDefaultAddress(id) {
+    const a = addressBook.find(x => Number(x.id) === Number(id));
+    if (!a) return;
+
+    try {
+        const res = await fetch(ADDRESS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'edit', id: a.id, label: a.label, recipient_name: a.recipient_name,
+                phone: a.phone, street_address: a.street_address, barangay: a.barangay,
+                city: a.city, province: a.province, zip_code: a.zip_code, is_default: true
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            addressBook.forEach(x => x.is_default = 0);
+            const idx = addressBook.findIndex(x => Number(x.id) === Number(id));
+            if (idx !== -1) addressBook[idx] = data.address;
+            renderAddressBook();
+            // Update profile card with new default address
+            updateProfileDefaultAddress();
+        } else {
+            showMsg('address', data.error || 'Could not set default.', true);
+        }
+    } catch (err) {
+        showMsg('address', 'Network error. Please try again.', true);
+    }
+}
+
+async function deleteAddressBookEntry(id) {
+    if (!confirm('Delete this saved address?')) return;
+
+    try {
+        const res = await fetch(ADDRESS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            addressBook = addressBook.filter(a => Number(a.id) !== Number(id));
+            if (data.new_default_id) {
+                addressBook.forEach(a => { a.is_default = Number(a.id) === Number(data.new_default_id) ? 1 : 0; });
+            }
+            renderAddressBook();
+            // Update profile card in case deleted address was the default
+            updateProfileDefaultAddress();
+        } else {
+            showMsg('address', data.error || 'Could not delete address.', true);
+        }
+    } catch (err) {
+        showMsg('address', 'Network error. Please try again.', true);
+    }
+}
+
+// Close the modal when clicking the overlay itself (not the modal card)
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'addressModalOverlay') closeAddressBookModal();
+});
+
+renderAddressBook();
 
 // ── Save password ──────────────────────────────────────────
 async function savePassword() {
@@ -643,3 +1080,24 @@ document.addEventListener('click', function (e) {
         if (this.value === '' && rulesPanel) rulesPanel.style.display = 'none';
     });
 })();
+
+// ── QR Modal ──────────────────────────────────────────────
+function openQRModal() {
+    const overlay = document.getElementById('qrModalOverlay');
+    if (overlay) overlay.classList.add('open');
+}
+
+function closeQRModal(e) {
+    if (e.target === document.getElementById('qrModalOverlay')) {
+        closeQRModalDirect();
+    }
+}
+
+function closeQRModalDirect() {
+    document.getElementById('qrModalOverlay').classList.remove('open');
+}
+
+// Close QR modal with ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeQRModalDirect();
+});

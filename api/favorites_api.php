@@ -16,13 +16,13 @@ require_once '../config/db_config.php';
 header('Content-Type: application/json');
 
 // ── Auth guard ────────────────────────────────────────────────
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_name'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Not authenticated.']);
     exit;
 }
 
-$userId = (int) $_SESSION['user_id'];
+$userName = $_SESSION['user_name'];
 
 $raw    = file_get_contents('php://input');
 $body   = json_decode($raw, true) ?? [];
@@ -36,10 +36,10 @@ switch ($action) {
             "SELECT f.product_name, p.price, p.image, p.category
              FROM   favorites f
              JOIN   products  p ON p.product_name = f.product_name
-             WHERE  f.user_id = ?
+             WHERE  f.user_name = ?
              ORDER  BY f.created_at DESC"
         );
-        $stmt->bind_param("i", $userId);
+        $stmt->bind_param("s", $userName);
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -54,26 +54,26 @@ switch ($action) {
             break;
         }
 
-        // Check current state — WHERE user_id prevents reading another user's data
+        // Check current state — WHERE user_name prevents reading another user's data
         $check = $connect->prepare(
-            "SELECT id FROM favorites WHERE user_id = ? AND product_name = ?"
+            "SELECT id FROM favorites WHERE user_name = ? AND product_name = ?"
         );
-        $check->bind_param("is", $userId, $productName);
+        $check->bind_param("ss", $userName, $productName);
         $check->execute();
         $exists = $check->get_result()->num_rows > 0;
 
         if ($exists) {
             $del = $connect->prepare(
-                "DELETE FROM favorites WHERE user_id = ? AND product_name = ?"
+                "DELETE FROM favorites WHERE user_name = ? AND product_name = ?"
             );
-            $del->bind_param("is", $userId, $productName);
+            $del->bind_param("ss", $userName, $productName);
             $del->execute();
             echo json_encode(['success' => true, 'favorited' => false]);
         } else {
             $ins = $connect->prepare(
-                "INSERT IGNORE INTO favorites (user_id, product_name) VALUES (?, ?)"
+                "INSERT IGNORE INTO favorites (user_name, product_name) VALUES (?, ?)"
             );
-            $ins->bind_param("is", $userId, $productName);
+            $ins->bind_param("ss", $userName, $productName);
             $ins->execute();
             echo json_encode(['success' => true, 'favorited' => true]);
         }
@@ -88,9 +88,9 @@ switch ($action) {
         }
 
         $stmt = $connect->prepare(
-            "INSERT IGNORE INTO favorites (user_id, product_name) VALUES (?, ?)"
+            "INSERT IGNORE INTO favorites (user_name, product_name) VALUES (?, ?)"
         );
-        $stmt->bind_param("is", $userId, $productName);
+        $stmt->bind_param("ss", $userName, $productName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'favorited' => true]);
@@ -104,11 +104,11 @@ switch ($action) {
             break;
         }
 
-        // WHERE user_id prevents removing another user's favorite
+        // WHERE user_name prevents removing another user's favorite
         $stmt = $connect->prepare(
-            "DELETE FROM favorites WHERE user_id = ? AND product_name = ?"
+            "DELETE FROM favorites WHERE user_name = ? AND product_name = ?"
         );
-        $stmt->bind_param("is", $userId, $productName);
+        $stmt->bind_param("ss", $userName, $productName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'favorited' => false]);

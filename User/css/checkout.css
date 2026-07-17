@@ -321,6 +321,46 @@ html {
     color: #fff;
 }
 
+.order-popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 26, 51, 0.55);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.order-popup-frame-wrap {
+    width: 100%;
+    max-width: 460px;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: orderPopupIn 0.25s ease;
+}
+
+#orderPopupFrame {
+    width: 100%;
+    height: min(90vh, 680px);
+    border: none;
+    display: block;
+    background: #fff;
+}
+
+@keyframes orderPopupIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 
 /* ══════════════════════════════
    BACKGROUND
@@ -781,7 +821,7 @@ footer {
         margin-right: 0;
     }
 
-    
+
     .nav-search.open {
         width: clamp(150px, 55vw, 267px);
         background: #fff;

@@ -1,8 +1,8 @@
 <?php
 // ── cart_api.php ─────────────────────────────────────────────
 // Handles all cart operations for the logged-in user only.
-// Every read/write is scoped to $_SESSION['user_id'] — the user
-// ID is NEVER taken from POST/GET input.
+// Every read/write is scoped to $_SESSION['user_name'] — the user
+// name is NEVER taken from POST/GET input.
 //
 // Actions (POST JSON body  { "action": "...", ... }):
 //   get       → return all cart items for this user
@@ -19,14 +19,14 @@ require_once '../config/db_config.php';
 header('Content-Type: application/json');
 
 // ── Auth guard ────────────────────────────────────────────────
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_name'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Not authenticated.']);
     exit;
 }
 
-// Always use session — never trust user input for the user ID
-$userId = (int) $_SESSION['user_id'];
+// Always use session — never trust user input for the user name
+$userName = $_SESSION['user_name'];
 
 // ── Parse request ─────────────────────────────────────────────
 $raw    = file_get_contents('php://input');
@@ -45,10 +45,10 @@ switch ($action) {
                     p.price, p.image
              FROM   cart c
              JOIN   products p ON p.product_name = c.product_name
-             WHERE  c.user_id = ?
+             WHERE  c.user_name = ?
              ORDER  BY c.created_at ASC"
         );
-        $stmt->bind_param("i", $userId);
+        $stmt->bind_param("s", $userName);
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -89,9 +89,9 @@ switch ($action) {
         }
 
         // INSERT … ON DUPLICATE KEY UPDATE increments quantity.
-        // The UNIQUE KEY is (user_id, product_name) in the schema.
+        // The UNIQUE KEY is (user_name, product_name) in the schema.
         $stmt = $connect->prepare(
-            "INSERT INTO cart (user_id, product_name, quantity, milk, addons, order_type, notes)
+            "INSERT INTO cart (user_name, product_name, quantity, milk, addons, order_type, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                quantity   = quantity + VALUES(quantity),
@@ -100,7 +100,7 @@ switch ($action) {
                order_type = VALUES(order_type),
                notes      = VALUES(notes)"
         );
-        $stmt->bind_param("isissss", $userId, $productName, $qty, $milk, $addons, $orderType, $notes);
+        $stmt->bind_param("ssissss", $userName, $productName, $qty, $milk, $addons, $orderType, $notes);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'message' => 'Item added to cart.']);
@@ -116,11 +116,11 @@ switch ($action) {
             break;
         }
 
-        // WHERE user_id = $userId prevents editing another user's row
+        // WHERE user_name = $userName prevents editing another user's row
         $stmt = $connect->prepare(
-            "UPDATE cart SET quantity = ? WHERE id = ? AND user_id = ?"
+            "UPDATE cart SET quantity = ? WHERE id = ? AND user_name = ?"
         );
-        $stmt->bind_param("iii", $qty, $cartId, $userId);
+        $stmt->bind_param("iis", $qty, $cartId, $userName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'message' => 'Cart updated.']);
@@ -135,11 +135,11 @@ switch ($action) {
             break;
         }
 
-        // WHERE user_id = $userId prevents deleting another user's row
+        // WHERE user_name = $userName prevents deleting another user's row
         $stmt = $connect->prepare(
-            "DELETE FROM cart WHERE id = ? AND user_id = ?"
+            "DELETE FROM cart WHERE id = ? AND user_name = ?"
         );
-        $stmt->bind_param("ii", $cartId, $userId);
+        $stmt->bind_param("is", $cartId, $userName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'message' => 'Item removed.']);
@@ -147,8 +147,8 @@ switch ($action) {
 
     // ── CLEAR: empty the entire cart for this user ────────────
     case 'clear':
-        $stmt = $connect->prepare("DELETE FROM cart WHERE user_id = ?");
-        $stmt->bind_param("i", $userId);
+        $stmt = $connect->prepare("DELETE FROM cart WHERE user_name = ?");
+        $stmt->bind_param("s", $userName);
         $stmt->execute();
 
         echo json_encode(['success' => true, 'message' => 'Cart cleared.']);

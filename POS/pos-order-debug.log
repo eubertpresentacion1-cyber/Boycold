@@ -1,0 +1,80 @@
+{
+    "time": "2026-07-12T20:26:16+02:00",
+    "remote_addr": "::1",
+    "request_uri": "\/POS\/pos-order-api.php",
+    "method": "POST",
+    "session_id": "21vmn8aavsuce9k3ag4e0hgntm",
+    "session": {
+        "user_id": 1,
+        "user_email": "jdelamerced933@gmail.com",
+        "user_name": "Takt Hoshino",
+        "user_phone": "09205075495",
+        "user_avatar": "uploads\/avatars\/avatar_1_1783873837.jpg"
+    },
+    "cookies": {
+        "Idea-62f5a903": "229cc420-1102-43dc-ba2e-797e8db9f645",
+        "remember_email": "jdelamerced933@gmail.com",
+        "PHPSESSID": "21vmn8aavsuce9k3ag4e0hgntm"
+    },
+    "headers": {
+        "Host": "localhost:3000",
+        "Connection": "keep-alive",
+        "Content-Length": "270",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "User-Agent": "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/150.0.0.0 Safari\/537.36",
+        "sec-ch-ua": "\"Not;A=Brand\";v=\"8\", \"Chromium\";v=\"150\", \"Google Chrome\";v=\"150\"",
+        "DNT": "1",
+        "Content-Type": "application\/json",
+        "sec-ch-ua-mobile": "?0",
+        "Accept": "*\/*",
+        "Origin": "http:\/\/localhost:3000",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "http:\/\/localhost:3000\/POS\/dashboard\/ordersum.php",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cookie": "Idea-62f5a903=229cc420-1102-43dc-ba2e-797e8db9f645; remember_email=jdelamerced933%40gmail.com; PHPSESSID=21vmn8aavsuce9k3ag4e0hgntm"
+    }
+}
+---
+{
+    "time": "2026-07-12T20:52:42+02:00",
+    "remote_addr": "::1",
+    "request_uri": "\/POS\/pos-order-api.php",
+    "method": "POST",
+    "session_id": "21vmn8aavsuce9k3ag4e0hgntm",
+    "session": {
+        "user_id": 1,
+        "user_email": "jdelamerced933@gmail.com",
+        "user_name": "Takt Hoshino",
+        "user_phone": "09205075495",
+        "user_avatar": "uploads\/avatars\/avatar_1_1783873837.jpg"
+    },
+    "cookies": {
+        "Idea-62f5a903": "229cc420-1102-43dc-ba2e-797e8db9f645",
+        "remember_email": "jdelamerced933@gmail.com",
+        "PHPSESSID": "21vmn8aavsuce9k3ag4e0hgntm"
+    },
+    "headers": {
+        "Host": "localhost:3000",
+        "Connection": "keep-alive",
+        "Content-Length": "267",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "User-Agent": "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/150.0.0.0 Safari\/537.36",
+        "sec-ch-ua": "\"Not;A=Brand\";v=\"8\", \"Chromium\";v=\"150\", \"Google Chrome\";v=\"150\"",
+        "DNT": "1",
+        "Content-Type": "application\/json",
+        "sec-ch-ua-mobile": "?0",
+        "Accept": "*\/*",
+        "Origin": "http:\/\/localhost:3000",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Dest": "empty",
+        "Referer": "http:\/\/localhost:3000\/POS\/dashboard\/ordersum.php",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cookie": "Idea-62f5a903=229cc420-1102-43dc-ba2e-797e8db9f645; remember_email=jdelamerced933%40gmail.com; PHPSESSID=21vmn8aavsuce9k3ag4e0hgntm"
+    }
+}
+---

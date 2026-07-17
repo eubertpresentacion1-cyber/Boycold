@@ -1,4 +1,3 @@
-
 // Replaces localStorage-only favorites with DB-backed API calls.
 // ─────────────────────────────────────────────────────────────
 
@@ -22,8 +21,13 @@ function toggleSearch() {
     const btn    = document.getElementById('searchIconBtn');
     const isOpen = search.classList.toggle('open');
     btn.classList.toggle('active', isOpen);
-    if (isOpen) setTimeout(() => search.querySelector('input').focus(), 420);
-    else search.querySelector('input').value = '';
+    if (isOpen) {
+        setTimeout(() => search.querySelector('input').focus(), 420);
+    } else {
+        const inp = search.querySelector('input');
+        inp.value = '';
+        applyFilters('', activeCategory);
+    }
 }
 function toggleAvatarDropdown() {
     document.getElementById('avatarDropdown').classList.toggle('open');
@@ -36,7 +40,8 @@ document.addEventListener('click', function(e) {
     if (search && searchBtn && !search.contains(e.target) && !searchBtn.contains(e.target)) {
         search.classList.remove('open');
         searchBtn.classList.remove('active');
-        search.querySelector('input').value = '';
+        const inp = search.querySelector('input');
+        if (inp) { inp.value = ''; applyFilters('', activeCategory); }
     }
     const wrap = document.querySelector('.avatar-dropdown-wrap');
     if (wrap && !wrap.contains(e.target)) {
@@ -45,19 +50,65 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ── CATEGORY FILTER ──────────────────────────────────────────
+// ── CATEGORY FILTER + SEARCH ──────────────────────────────────
+let activeCategory = 'popular'; // tracks the currently active tab
+
+function applyFilters(query, category) {
+    const q = query.trim().toLowerCase();
+    let anyVisible = false;
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        const cats     = (card.getAttribute('data-category') || '').trim().split(/\s+/).filter(Boolean);
+        const name     = (card.getAttribute('data-product-name') || '').toLowerCase();
+        const matchCat = !category || cats.includes(category);
+        const matchQ   = !q || name.includes(q);
+        const show     = matchCat && matchQ;
+        card.style.display = show ? '' : 'none';
+        if (show) anyVisible = true;
+    });
+
+    // Show/hide "no results" panel
+    const nsr = document.getElementById('noSearchResults');
+    if (nsr) {
+        if (!anyVisible && q) {
+            nsr.querySelector('.nsr-sub').textContent = `No results for "${query}". Try a different search.`;
+            nsr.style.display = 'flex';
+        } else {
+            nsr.style.display = 'none';
+        }
+    }
+}
+
 document.querySelectorAll('.box ul li a').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelectorAll('.box ul li a').forEach(l => l.classList.remove('active'));
         this.classList.add('active');
-        const filter = this.getAttribute('data-filter');
-        document.querySelectorAll('.product-card').forEach(card => {
-            const cats = (card.getAttribute('data-category') || '').split(' ');
-            card.style.display = cats.includes(filter) ? '' : 'none';
-        });
+        activeCategory = this.getAttribute('data-filter');
+        // Keep any current search query active
+        const inp = document.querySelector('#navSearch input');
+        applyFilters(inp ? inp.value : '', activeCategory);
     });
 });
+
+// ── LIVE SEARCH INPUT ────────────────────────────────────────
+(function () {
+    const inp = document.querySelector('#navSearch input');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+        const q = this.value.trim();
+        if (q) {
+            // While typing: deactivate category tabs and show all matches
+            document.querySelectorAll('.box ul li a').forEach(l => l.classList.remove('active'));
+            applyFilters(q, '');
+        } else {
+            // Cleared: restore active category
+            const activeLink = document.querySelector('.box ul li a.active');
+            if (activeLink) activeLink.classList.add('active');
+            applyFilters('', activeCategory);
+        }
+    });
+})();
 
 // ── FAVORITES — DB-BACKED ────────────────────────────────────
 const favSet     = new Set();
@@ -193,4 +244,8 @@ function showCartToast(name) {
 
 // ── INIT ─────────────────────────────────────────────────────
 loadFavorites();
-document.querySelector('.box ul li a.active')?.click();
+const _initActiveLink = document.querySelector('.box ul li a.active');
+if (_initActiveLink) {
+    activeCategory = _initActiveLink.getAttribute('data-filter') || 'popular';
+    _initActiveLink.click();
+}

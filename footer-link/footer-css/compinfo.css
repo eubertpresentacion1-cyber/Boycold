@@ -93,7 +93,7 @@ html {
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.08);
 }
 
-sidebar-avatar {
+.sidebar-avatar {
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -904,6 +904,11 @@ footer {
     .sidebar-user-email {
         font-size: 11px;
     }
+
+    .nav-right-group {
+        display:none;
+    }
+
 
     .nav-box {
         width: 210px;

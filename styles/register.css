@@ -9,7 +9,7 @@
 header {
     border-bottom: 1px solid #ddd;
     padding: 0;
-    text-align: left;
+    text-align: center;
     position: sticky;
     top: 0;
     background-color: #fff;
@@ -19,7 +19,7 @@ header {
 header img {
     height: 50%;
     width: auto;
-    margin: 20px 0px 15px 30px;
+    margin: 20px 0px 15px 0px;
 }
 
 body {

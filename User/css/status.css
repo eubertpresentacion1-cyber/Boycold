@@ -178,6 +178,60 @@ html {
     display: none;
 }
 
+.order-item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.order-item-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.order-item-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.order-item-name {
+    font-weight: 600;
+    color: #1e1e1e;
+}
+
+.order-item-opts {
+    font-size: 0.85em;
+    color: #888;
+}
+
+.order-item-price {
+    font-weight: 600;
+    color: #1e1e1e;
+    white-space: nowrap;
+}
+
+.delivery-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.delivery-detail-label {
+    color: #888;
+}
+
+.delivery-detail-value {
+    color: #1e1e1e;
+    font-weight: 500;
+    text-align: right;
+}
+
 
 
 /* ══════════════════════════════
@@ -840,6 +894,8 @@ html {
 
     position: relative;
 
+    --track-inset: calc(8% + 20px);
+
 }
 
 
@@ -852,9 +908,9 @@ html {
 
     top: 20px;
 
-    left: calc(10% + 20px);
+    left: var(--track-inset);
 
-    right: calc(10% + 20px);
+    right: var(--track-inset);
 
     height: 2px;
 
@@ -872,10 +928,12 @@ html {
 
     top: 20px;
 
-    left: calc(10% + 20px);
+    left: var(--track-inset);
 
-    width: 0%;
-    /* was 38% — now at step 1, no fill needed */
+    /* Width is a % of the actual track (container width minus both insets),
+       not of the full container — otherwise 100% overshoots past the
+       last circle instead of landing on "Delivered". */
+    width: calc((100% - (var(--track-inset) * 2)) * var(--fill-percent, 0) / 100);
 
     height: 2px;
 
@@ -946,7 +1004,7 @@ html {
 
 
 
-.fa-solid.fa-clipboard-check {
+.step-circle.active i {
 
     color: #000;
 
@@ -1949,6 +2007,14 @@ html {
     transition: color 0.2s;
 
     position: relative;
+
+}
+
+
+
+.attach-btn > i {
+
+    display: inline-block;
 
     transform: rotate(-45deg);
 
@@ -3002,6 +3068,8 @@ footer {
 
         justify-content: space-between;
 
+        --track-inset: calc(10% + 18px);
+
     }
 
 
@@ -3070,10 +3138,6 @@ footer {
 
         top: 23px;
 
-        left: calc(10% + 18px);
-
-        right: calc(10% + 18px);
-
     }
 
 
@@ -3081,8 +3145,6 @@ footer {
     .progress-line-fill {
 
         top: 23px;
-
-        left: calc(10% + 18px);
 
     }
 

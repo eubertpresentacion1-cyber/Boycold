@@ -637,6 +637,125 @@ html {
     filter: grayscale(1);
 }
 
+/* ── QR button on loyalty card ── */
+.card-no-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.qr-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #6F4E37;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.qr-btn:hover {
+    background: rgba(111, 78, 55, 0.1);
+    color: #5C3A22;
+}
+
+/* ── QR Modal ── */
+.qr-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.qr-modal-overlay.open {
+    display: flex;
+}
+
+.qr-modal {
+    background: #fff;
+    border-radius: 20px;
+    padding: 30px 28px 32px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.qr-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #aaa;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.qr-modal-close:hover {
+    color: #1e1e1e;
+}
+
+.qr-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e1e1e;
+    margin-bottom: 4px;
+}
+
+.qr-modal-sub {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 18px;
+}
+
+.qr-image-wrap {
+    background: #f8f4f0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    display: inline-block;
+}
+
+.qr-image-wrap img {
+    width: 180px;
+    height: 180px;
+    display: block;
+    object-fit: contain;
+}
+
+.qr-modal-cardno {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.qr-modal-user {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e1e1e;
+}
+
 .card-no {
     font-size: 11px;
     color: #888;
@@ -1009,6 +1128,7 @@ html {
 .s-save-btn.s-logout-btn:hover {
     background: #a93226;
 }
+
 
 
 /* ══════════════════════════════

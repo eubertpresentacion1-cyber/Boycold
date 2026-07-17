@@ -83,7 +83,7 @@
             document.getElementById('storeHours').textContent = shop.hours;
             document.getElementById('phoneNum').textContent = shop.phone;
 
-            if (map && moveMap) {
+            if (map) {
                 map.setView([shop.lat, shop.lng], 14, { animate: true });
                 leafletMarkers.forEach(m => {
                     if (Math.abs(m.lat - shop.lat) < 0.001) m.marker.openPopup();
@@ -91,11 +91,6 @@
                 });
             }
         }
-                leafletMarkers.forEach(m => {
-                    if (Math.abs(m.lat - shop.lat) < 0.001) m.marker.openPopup();
-                    else m.marker.closePopup();
-                });
-    
 
         let userMarker = null;
 
@@ -121,7 +116,7 @@
 
                     userMarker = L.marker([lat, lng], { icon: youIcon })
                         .addTo(map)
-                        .bindPopup('<span class="map-popup-label">📍 Andine ka Tanga</span>')
+                        .bindPopup('<span class="map-popup-label">📍 You\'re here</span>')
                         .openPopup();
                 }
             }, () => alert('Could not get your location. Please allow location access.'));
@@ -159,14 +154,23 @@
             else search.querySelector('input').value = '';
         }
 
+        function toggleAvatarDropdown() {
+            document.getElementById('avatarDropdown').classList.toggle('open');
+        }
+
         document.addEventListener('click', function(e) {
             const search = document.getElementById('navSearch');
             const btn = document.getElementById('searchIconBtn');
-            if (!search || !btn) return;
-            if (!search.contains(e.target) && !btn.contains(e.target)) {
+            if (search && btn && !search.contains(e.target) && !btn.contains(e.target)) {
                 search.classList.remove('open');
                 btn.classList.remove('active');
                 search.querySelector('input').value = '';
+            }
+
+            const wrap = document.querySelector('.avatar-dropdown-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                const dd = document.getElementById('avatarDropdown');
+                if (dd) dd.classList.remove('open');
             }
         });
 

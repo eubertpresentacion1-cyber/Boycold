@@ -1,0 +1,213 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+}
+
+body{
+    background-color: #6F4E37;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden; /* prevents scrollbars from the slide animation */
+}
+
+.flashscreen{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    padding: 0 1rem;
+}
+
+.flashscreen img{
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    z-index: 1;
+    margin-right: 2rem;
+    transform: translateX(0) rotate(0deg);
+    animation: rotateIn 800ms ease-in-out,
+                scale 1s ease 1.2s,
+                slideLeft 170ms ease 1.5s forwards;
+}
+
+@keyframes rotateIn {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    25% {
+        transform: rotate(110deg) scale(1.2);
+    }
+    40% {
+        transform: rotate(110deg) scale(1.2);
+    }
+    60% {
+        transform: rotate(110deg) scale(1.2);
+    }
+    70% {
+        transform: rotate(0deg) scale(1);
+    }
+    90% {
+        transform: rotate(0deg) scale(1);
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+@keyframes slideLeft {
+    from {
+        transform: translateX(0px);
+    }
+    to {
+        transform: translateX(-325px);
+    }
+}
+
+.middle-part{
+    text-align: center;
+}
+
+.middle-part h1,
+.middle-part p{
+    opacity: 0;
+}
+
+.middle-part h1{
+    font-size: 6rem;
+    line-height: 100px;
+    font-family: 'Gaegu', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -8px;
+    animation: opacity 400ms ease 2s forwards;
+}
+
+.middle-part p{
+    font-size: 2rem;
+    font-family: 'Poppins', sans-serif;
+    color:#D6B48A;
+    display: flex;
+    justify-content: center;
+    animation: opacity 1ms ease 2.7s forwards,
+                slideDown 700ms ease 2.7s forwards;
+}
+
+@keyframes opacity {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-30px);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* ============================================ */
+/* TABLET / iPAD BREAKPOINTS                      */
+/* ============================================ */
+
+/* iPad Pro 12.9" landscape, large tablets landscape */
+@media (max-width: 1180px) {
+    .middle-part h1 {
+        font-size: 5.2rem;
+        line-height: 90px;
+        letter-spacing: -6px;
+    }
+
+    .middle-part p {
+        font-size: 1.7rem;
+    }
+
+    .flashscreen img {
+        width: 130px;
+        height: 130px;
+    }
+
+    @keyframes slideLeft {
+        from { transform: translateX(0px); }
+        to   { transform: translateX(-300px); }
+    }
+}
+
+/* iPad Air / iPad 10.9" portrait & landscape, iPad Pro 11" portrait */
+@media (max-width: 1024px) {
+    .middle-part h1 {
+        font-size: 4.4rem;
+        line-height: 75px;
+        letter-spacing: -5px;
+    }
+
+    .middle-part p {
+        font-size: 1.5rem;
+    }
+
+    .flashscreen img {
+        width: 110px;
+        height: 110px;
+        margin-right: 1.5rem;
+    }
+
+    @keyframes slideLeft {
+        from { transform: translateX(0px); }
+        to   { transform: translateX(-250px); }
+    }
+}
+
+/* iPad mini / standard iPad portrait, smaller tablets */
+@media (max-width: 834px) {
+    .middle-part h1 {
+        font-size: 3.6rem;
+        line-height: 60px;
+        letter-spacing: -4px;
+    }
+
+    .middle-part p {
+        font-size: 1.25rem;
+    }
+
+    .flashscreen img {
+        width: 95px;
+        height: 95px;
+        margin-right: 1.2rem;
+    }
+
+    @keyframes slideLeft {
+        from { transform: translateX(0px); }
+        to   { transform: translateX(-210px); }
+    }
+}
+
+/* iPad mini portrait (narrowest common tablet width) */
+@media (max-width: 768px) {
+    .middle-part h1 {
+        font-size: 3rem;
+        line-height: 50px;
+        letter-spacing: -3px;
+    }
+
+    .middle-part p {
+        font-size: 1.1rem;
+        padding: 0 1rem;
+        text-align: center;
+    }
+
+    .flashscreen img {
+        width: 80px;
+        height: 80px;
+        margin-right: 1rem;
+    }
+
+    @keyframes slideLeft {
+        from { transform: translateX(0px); }
+        to   { transform: translateX(-180px); }
+    }
+}

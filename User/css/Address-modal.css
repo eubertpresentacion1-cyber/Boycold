@@ -1,0 +1,177 @@
+/* ── Add New Address Modal ─────────────────────────────────── */
+.addr-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 20px;
+    overflow-y: auto;
+}
+
+.addr-modal {
+    background: #ffffff;
+    width: 100%;
+    max-width: 560px;
+    border-radius: 16px;
+    padding: 32px 36px;
+    font-family: 'Afacad', sans-serif;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.addr-modal-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #1e1e1e;
+}
+
+.addr-modal-sub {
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    margin: 0 0 24px;
+}
+
+.addr-modal-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.addr-field {
+    margin-bottom: 16px;
+}
+
+.addr-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.addr-field input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: 'Afacad', sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.addr-field input[type="text"]:focus {
+    border-color: #6F4E37;
+}
+
+.addr-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+    margin: 4px 0 8px;
+    cursor: pointer;
+}
+
+.addr-checkbox-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #6F4E37;
+    cursor: pointer;
+}
+
+.addr-modal-msg {
+    color: #d33;
+    font-size: 13px;
+    min-height: 18px;
+    margin: 4px 0 0;
+}
+
+.addr-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.addr-btn-cancel,
+.addr-btn-save {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 30px;
+    font-family: 'Afacad', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.addr-btn-cancel {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.addr-btn-cancel:hover {
+    background: #f5f5f5;
+}
+
+.addr-btn-save {
+    background: #6F4E37;
+    color: #fff;
+}
+
+.addr-btn-save:hover {
+    background: #5a3e2c;
+}
+
+.addr-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Address book (Saved Addresses settings panel) ── */
+        .addr-book-list { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+        .addr-book-empty { font-size: .88rem; opacity: .6; padding: 10px 0; }
+        .addr-book-card { border: 1.5px solid #e5ded6; border-radius: 12px; padding: 14px 16px; background: #fff; }
+        .addr-book-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .addr-book-label { font-weight: 600; font-family: 'Afacad', sans-serif; }
+        .addr-book-default-badge { font-size: .72rem; background: #6F4E37; color: #fff; padding: 2px 9px; border-radius: 20px; letter-spacing: .3px; }
+        .addr-book-recipient { font-size: .88rem; opacity: .85; margin-bottom: 2px; }
+        .addr-book-line { font-size: .85rem; opacity: .7; margin-bottom: 10px; }
+        .addr-book-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .addr-book-btn { border: 1.5px solid #ddd; background: #fff; border-radius: 8px; padding: 6px 12px; font-size: .8rem; font-family: 'Afacad', sans-serif; cursor: pointer; }
+        .addr-book-btn:hover { border-color: #6F4E37; color: #6F4E37; }
+        .addr-book-btn-danger:hover { border-color: #c0392b; color: #c0392b; }
+
+/* "+ Add new address" link under the DELIVER TO field */
+.co-add-address-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 10px;
+    font-family: 'Afacad', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6F4E37;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.co-add-address-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .addr-modal-row {
+        grid-template-columns: 1fr;
+    }
+}

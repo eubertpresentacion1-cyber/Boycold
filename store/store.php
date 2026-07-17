@@ -15,7 +15,12 @@ $user = $stmt->get_result()->fetch_assoc();
 
 $fullName  = htmlspecialchars($user['Firstname'] . ' ' . $user['Lastname']);
 $userEmail = htmlspecialchars($user['email']);
-$avatar    = $user['avatar'] ? htmlspecialchars($user['avatar']) : '';
+$avatarRaw = $user['avatar'] ?? '';
+if ($avatarRaw !== '' && !preg_match('#^(https?://|/)#', $avatarRaw)) {
+    // Avatar paths are stored relative to /User/, but this page lives in /store/
+    $avatarRaw = '/User/' . $avatarRaw;
+}
+$avatar    = $avatarRaw !== '' ? htmlspecialchars($avatarRaw) : '';
 
 $_SESSION['user_name']  = $user['Firstname'] . ' ' . $user['Lastname'];
 $_SESSION['user_email'] = $user['email'];
@@ -46,45 +51,72 @@ $_SESSION['user_email'] = $user['email'];
     <div class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="../User/home.php">HOME</a></li>
-                <li><a href="../User/Menu.php">MENU</a></li>
-                <li><a href="store.php">STORES</a></li>
-                <li class="sidebar-nav-only"><a href="../User/status.php">ORDERS</a></li>
-                <li class="sidebar-nav-only"><a href="../User/favorites.php">FAVORITES</a></li>
+                <li><a href="/User/home.php">HOME</a></li>
+                <li><a href="/User/menu.php">MENU</a></li>
+                <li><a href="/User/status.php">ORDER</a></li>
+                <li><a href="../store/store.php">STORES</a></li>
+                <li class="sidebar-nav-only-not"><a href="/User/status.php">ORDERS</a></li>
+                <li class="sidebar-nav-only"><a href="/User/favorites.php">FAVORITES</a></li>
+                <li><a href="../User/cart.php" class="cart-link">
+                        <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
+                    </a></li>
             </ul>
         </nav>
         <div class="sidebar-user">
-            <div class="sidebar-avatar" id="sidebarAvatarWrap">
-                <?php if ($avatar): ?>
-                    <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar">
-                <?php else: ?>
-                    <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
-                    <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
-                <?php endif; ?>
-            </div>
+            <a href="/User/account.php" class="sidebar-avatar-link">
+                <div class="sidebar-avatar" id="sidebarAvatarWrap">
+                    <?php if ($avatar): ?>
+                        <img id="sidebarAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon" style="display:none;"></i>
+                    <?php else: ?>
+                        <img id="sidebarAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="sidebarAvatarIcon"></i>
+                    <?php endif; ?>
+                </div>
+            </a>
             <div class="sidebar-user-info">
                 <span class="sidebar-user-name"><?= $fullName ?></span>
                 <span class="sidebar-user-email"><?= $userEmail ?></span>
             </div>
         </div>
     </div>
-
-    <!-- MAIN NAV -->
     <nav id="mainNav">
         <div class="nav-box"></div>
         <div class="nav-left-group">
             <div class="hamburger" onclick="toggleSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </div>
+
             <ul class="nav-links">
-                <li><a href="../User/home.php">HOME</a></li>
-                <li><a href="../User/Menu.php">MENU</a></li>
-                <li><a href="../User/status.php">ORDERS</a></li>
-                <li><a href="../User/favorites.php">FAVORITES</a></li>
+                <li><a href="/User/home.php">HOME</a></li>
+                <li><a href="/User/menu.php" class="active">MENU</a></li>
+                <li><a href="/User/status.php">ORDERS</a></li>
+                <li><a href="/User/favorites.php">FAVORITES</a></li>
             </ul>
         </div>
         <div class="logo">
             <img src="../picture/Boycold Logo 2.png" alt="BoyCold logo">
+        </div>
+        <div class="nav-right-group">
+            <a href="/User/cart.php" class="cart-link">
+                <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i>
+            </a>
+            <div class="avatar-dropdown-wrap">
+                <div class="sidebar-avatar" id="navAvatarBtn" onclick="toggleAvatarDropdown()">
+                    <?php if ($avatar): ?>
+                        <img id="navAvatarImg" src="<?= $avatar ?>" alt="avatar" style="display:block;" onerror="this.style.display='none'; const icon=this.parentElement.querySelector('.fa-user'); if(icon) icon.style.display='';">
+                        <i class="fa-solid fa-user" id="navAvatarIcon" style="display:none;"></i>
+                    <?php else: ?>
+                        <img id="navAvatarImg" src="" alt="avatar" style="display:none;">
+                        <i class="fa-solid fa-user" id="navAvatarIcon"></i>
+                    <?php endif; ?>
+                </div>
+                <div class="avatar-dropdown" id="avatarDropdown">
+                    <a href="/User/account.php"><i class="fa-solid fa-user"></i> Account</a>
+                    <hr>
+                    <a href="../logout.php" class="dropdown-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</a>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -183,25 +215,25 @@ $_SESSION['user_email'] = $user['email'];
     </main>
 
     <footer>
-        <div class="footer-content">
-            <div class="footer-logo">
-               <img src="../picture/icon2.png" alt="BoyCold logo">
-                <h1>BOYCOLD CAFE</h1>
-                <p>© 2024 BoyCold Cafe. All rights reserved.</p>
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="../picture/icon2.png" alt="BoyCold logo">
+                    <h1>BOYCOLD CAFE</h1>
+                    <p>&copy; <?php echo date("Y"); ?> BoyCold Café. All Rights Reserved.</p>
+                </div>
+                <div class="footer-links">
+                    <ul>
+                        <li><a href="../footer-link/about.php">About Us</a></li>
+                        <li><a href="../footer-link/compinfo.php">Company Information</a></li>
+                        <li><a href="../footer-link/faqs.php">FAQs</a></li>
+                        <li><a href="../footer-link/privacy.php">Privacy and Safety</a></li>
+                        <li><a href="../footer-link/terms.php">Terms and Conditions</a></li>
+                    </ul>
+                </div>
             </div>
-            <div class="footer-links">
-                <ul>
-                    <li><a href="#">Contact Information</a></li>
-                    <li><a href="#">Customer Links</a></li>
-                    <li><a href="#">Company Information</a></li>
-                    <li><a href="#">Legal Links</a></li>
-                    <li><a href="#">Social Media Links</a></li>
-                </ul>
-            </div>
-        </div>
-    </footer>
+        </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="location.js"></script>
 </body>
-</html>
+</html> 

@@ -17,6 +17,11 @@ $fullName = htmlspecialchars($user['firstname'] . ' ' . $user['lastname']);
 $email    = htmlspecialchars($user['email']);
 $avatar   = $user['avatar'] ?? '';
 
+// Set default branch if not set
+if (!isset($_SESSION['branch_id'])) {
+    $_SESSION['branch_id'] = 1; // Default to Baliuag
+}
+
 // Fetch all products from DB
 $products = $connect->query("SELECT id, product_name, price, image, category FROM products WHERE is_available = 1 ORDER BY category, product_name");
 ?>
@@ -49,7 +54,7 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                 <li><a href="../store/store.php">STORES</a></li>
                 <li class="sidebar-nav-only-not"><a href="status.php">ORDERS</a></li>
                 <li class="sidebar-nav-only"><a href="favorites.php">FAVORITES</a></li>
-                <li><a href="../order/cart.php" class="cart-link">
+                <li><a href="cart.php" class="cart-link">
                         <i class="fa-solid fa-cart-shopping fa-lg" style="color: rgb(0, 0, 0);"></i> CART
                     </a></li>
             </ul>
@@ -67,25 +72,18 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                     <?php endif; ?>
                 </div>
             </a>
-
             <div class="sidebar-user-info">
                 <span class="sidebar-user-name"><?= $fullName ?></span>
                 <span class="sidebar-user-email"><?= $email ?></span>
             </div>
         </div>
     </div>
-
-
-
-    <!-- MAIN NAV -->
-
     <nav id="mainNav">
         <div class="nav-box"></div>
         <div class="nav-left-group">
             <div class="hamburger" onclick="toggleSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </div>
-
             <ul class="nav-links">
                 <li><a href="home.php">HOME</a></li>
                 <li><a href="menu.php" class="active">MENU</a></li>
@@ -93,15 +91,9 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                 <li><a href="favorites.php">FAVORITES</a></li>
             </ul>
         </div>
-
-
-
-        <!-- CENTER: logo -->
-
         <div class="logo">
             <img src="../picture/Boycold Logo 2.png" alt="BoyCold logo">
         </div>
-
         <div class="nav-right-group">
             <div class="nav-search" id="navSearch">
                 <i class="fa-solid fa-magnifying-glass" id="searchIconBtn" onclick="toggleSearch()"></i>
@@ -128,11 +120,10 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             </div>
         </div>
     </nav>
+    
     <header>
-
         <div class="background"></div>
         <div class="box">
-
             <ul>
                 <li><a href="#" data-filter="popular" class="active">Popular</a></li>
                 <li><a href="#" data-filter="coffee">Coffee</a></li>
@@ -147,13 +138,20 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
             </ul>
 
         </div>
-
         <section class="menu-section">
             <div class="menu-content">
+                <!-- No search results state -->
+                <div id="noSearchResults">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <p class="nsr-title">No results found</p>
+                    <p class="nsr-sub">Try searching for something else.</p>
+                </div>
                 <div class="product-grid" id="productGrid">
                     <?php
-                    // Render products dynamically from database
-
+                    $popularProducts = ['spanish latte', 'white mocha', 'french vanilla', 'milky oreo','choco berry','choco vanilla cookie','choco banana pudding','sea salt latte',
+                    'caramel macchiato','salted caramel','cheesecake latte','einspanner latte','biscoff creamy latte', 'tiramisu latte', 'matcha latte', 'seasalt matcha','matcha freddo',
+                    'strawberry matcha','matcha banana pudding','mango graham','mango oreo','berry oreo','berry mango','hershey delight','oreo frappe','java chips','biscoff frappe','lolly oreo waffle',
+                    'lolly matcha waffle','lolly biscoff waffle','chicken quesadilla','messy tuna quesadilla']; // Add more popular product names here (lowercase)
                     if ($products && $products->num_rows > 0) {
                         while ($product = $products->fetch_assoc()) {
                             $id    = htmlspecialchars($product['id']);
@@ -161,10 +159,20 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                             $price = htmlspecialchars($product['price']);
                             $image = htmlspecialchars($product['image'] ?? '');
                             $category = htmlspecialchars($product['category'] ?? '');
+
+                            // Normalize for comparison: trim whitespace, lowercase
+                            $normalizedName = strtolower(trim($product['product_name']));
+                            $isPopular = in_array($normalizedName, $popularProducts, true);
+
+                            // Add "popular" to category if product is in popular list
+                            $dataCategory = $category;
+                            if ($isPopular) {
+                                $dataCategory .= ' popular';
+                            }
                     ?>
 
                             <div class="product-card"
-                                data-category="<?= $category ?>"
+                                data-category="<?= $dataCategory ?>"
                                 data-id="<?= strtolower(str_replace(' ', '-', $name)) ?>"
                                 data-product-id="<?= $id ?>"
                                 data-product-name="<?= $name ?>"
@@ -173,7 +181,11 @@ $products = $connect->query("SELECT id, product_name, price, image, category FRO
                                 <div class="card-image">
                                     <div class="card-image-placeholder">
                                         <div class="card-top">
-                                            <span class="card-badge">Popular<i class="fa-solid fa-star"></i></span>
+                                            <?php if ($isPopular): ?>
+                                                <span class="card-badge">Popular<i class="fa-solid fa-star"></i></span>
+                                            <?php else: ?>
+                                                <span></span>
+                                            <?php endif; ?>
                                             <button class="card-heart"><i class="fa-solid fa-heart"></i></button>
                                         </div>
                                         <img src="<?= $image ?>" alt="<?= $name ?>">

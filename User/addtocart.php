@@ -9,8 +9,28 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
+
+// Get user_name for cart queries
+$stmt = $connect->prepare("SELECT user_name FROM users WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$userRecord = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$userRecord) {
+    session_destroy();
+    header('Location: ../login.php');
+    exit;
+}
+
+$userName = $userRecord['user_name'];
 $successMsg = '';
 $errorMsg   = '';
+
+// Set default branch if not set
+if (!isset($_SESSION['branch_id'])) {
+    $_SESSION['branch_id'] = 1; // Default to Baliuag
+}
 
 // Handle AJAX / POST save for phone or address
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -238,13 +258,26 @@ $_SESSION['user_email'] = $user['email'];
                 const data = await res.json();
                 if (data.success) {
                     currentCart = data.items;
+                    // Auto-select all items by default
+                    selectedItems.clear();
+                    currentCart.forEach(item => selectedItems.add(item.cartId));
                     renderCart(currentCart);
-                    recalcSummary();
+                    // Check all checkboxes after rendering
+                    setTimeout(() => {
+                        document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+                        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                        if (selectAllCheckbox) selectAllCheckbox.checked = true;
+                        recalcSummary();
+                    }, 0);
                 }
             } catch (err) {
                 console.error('Failed to load cart', err);
             }
         }
+
+        let selectedItems = new Set();
 
         function renderCart(items) {
             const container = document.getElementById('cartItems');
@@ -266,8 +299,22 @@ $_SESSION['user_email'] = $user['email'];
             }
             
             if (cartBox) cartBox.classList.remove('is-empty');
-            container.innerHTML = items.map(item => `
+            
+            // Add select all header
+            let html = `
+                <div class="cart-select-header">
+                    <label class="select-all-label">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                        <span>Select All</span>
+                    </label>
+                </div>
+            `;
+            
+            html += items.map(item => `
         <div class="cart-item" data-cart-id="${item.cartId}">
+            <div class="cart-item-checkbox">
+                <input type="checkbox" class="item-checkbox" data-cart-id="${item.cartId}" onchange="toggleItemSelection(${item.cartId})" />
+            </div>
             <div class="cart-item-img"><img src="${item.image}" alt="${item.name}"></div>
             <div class="cart-item-details">
                 <p class="item-name">${item.name}</p>
@@ -283,6 +330,8 @@ $_SESSION['user_email'] = $user['email'];
             <button class="cart-item-delete" onclick="removeItem(${item.cartId})"><i class="fa-solid fa-trash"></i></button>
         </div>
     `).join('');
+            
+            container.innerHTML = html;
         }
 
         async function updateQty(cartId, delta) {
@@ -328,16 +377,56 @@ $_SESSION['user_email'] = $user['email'];
             }
         }
 
+        function toggleItemSelection(cartId) {
+            const checkbox = document.querySelector(`.item-checkbox[data-cart-id="${cartId}"]`);
+            if (checkbox.checked) {
+                selectedItems.add(cartId);
+            } else {
+                selectedItems.delete(cartId);
+            }
+            updateSelectAllCheckbox();
+            recalcSummary();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            
+            selectedItems.clear();
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                if (selectAllCheckbox.checked) {
+                    const cartId = parseInt(checkbox.getAttribute('data-cart-id'));
+                    selectedItems.add(cartId);
+                }
+            });
+            recalcSummary();
+        }
+
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            const checkedCount = Array.from(itemCheckboxes).filter(cb => cb.checked).length;
+            
+            if (checkedCount === itemCheckboxes.length && itemCheckboxes.length > 0) {
+                selectAllCheckbox.checked = true;
+            } else {
+                selectAllCheckbox.checked = false;
+            }
+        }
+
         function recalcSummary() {
-            const sub = currentCart.reduce((s, i) => s + i.total, 0);
-            const checkoutBtn = document.querySelector('.btn-checkout');
+            // Only calculate for selected items
+            const selectedItemsList = currentCart.filter(i => selectedItems.has(i.cartId));
+            const sub = selectedItemsList.reduce((s, i) => s + i.total, 0);
+            const checkoutBtns = document.querySelectorAll('.btn-checkout');
             
             document.getElementById('summarySubtotal').textContent = '₱' + sub.toFixed(2);
             document.getElementById('summaryTotal').textContent = '₱' + (sub + DELIVERY + TAX).toFixed(2);
             
-            // Enable/disable checkout button based on cart
-            if (checkoutBtn) {
-                if (currentCart.length === 0) {
+            // Enable/disable ALL checkout buttons (mobile + desktop) based on selected items
+            checkoutBtns.forEach(checkoutBtn => {
+                if (selectedItems.size === 0) {
                     checkoutBtn.disabled = true;
                     checkoutBtn.style.opacity = '0.45';
                     checkoutBtn.style.cursor = 'not-allowed';
@@ -346,14 +435,19 @@ $_SESSION['user_email'] = $user['email'];
                     checkoutBtn.style.opacity = '1';
                     checkoutBtn.style.cursor = 'pointer';
                 }
-            }
+            });
         }
 
         async function placeOrder() {
-            if (!currentCart.length) return;
+            if (selectedItems.size === 0) {
+                alert('Please select at least one item to checkout');
+                return;
+            }
+            // Only include selected items in the order
+            const selectedItemsList = currentCart.filter(i => selectedItems.has(i.cartId));
             const orderData = {
                 action: 'place',
-                items: currentCart.map(i => ({
+                items: selectedItemsList.map(i => ({
                     name: i.name,
                     unitPrice: i.unitPrice,
                     qty: i.qty,
@@ -389,9 +483,18 @@ $_SESSION['user_email'] = $user['email'];
             }
         }
 
-        document.querySelector('.btn-checkout')?.addEventListener('click', function() {
-            if (!currentCart.length) return;
-            window.location.href = 'checkout.php';
+        document.querySelectorAll('.btn-checkout').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (selectedItems.size === 0) {
+                    alert('Please select at least one item to checkout');
+                    return;
+                }
+                // Store selected item cart IDs to checkout.php
+                sessionStorage.setItem('boycold_selected_items', JSON.stringify(Array.from(selectedItems)));
+                // Clear any leftover "buy now" stash
+                sessionStorage.removeItem('boycold_direct_order');
+                window.location.href = 'checkout.php';
+            });
         });
         loadCart();
 

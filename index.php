@@ -10,6 +10,7 @@
     <title>BoyCold Café</title>
 </head>
 <body>
+    <p><a href="checkout.php">Go to checkout</a></p>
 
     <div class="main-nav">
         <nav id="mainNav">
@@ -30,10 +31,7 @@
                 <button class="btn-join" onclick="window.location.href='register.php'">Join now</button>
             </div>
         </nav>
-
-        
     </div>
-
     <header>
         <div class="background">
             <div class="box">
